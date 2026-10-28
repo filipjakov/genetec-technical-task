@@ -13,6 +13,6 @@ export interface DataGridEmptyProps {
  * children only while that state applies.
  */
 export function DataGridEmpty({ children }: DataGridEmptyProps) {
-  const { view } = useDataGridContext('Empty');
-  return view === 'empty' ? children : null;
+  const { table } = useDataGridContext('Empty');
+  return table.getCoreRowModel().rows.length === 0 ? children : null;
 }

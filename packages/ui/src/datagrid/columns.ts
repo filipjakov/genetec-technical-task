@@ -1,5 +1,38 @@
 import type { ReactNode } from 'react';
 
+/** The TanStack built-in filter functions a column can use. */
+export type DataGridFilterFn = 'includesString' | 'arrHas' | 'inDateRange';
+
+/** An `inDateRange` filter value, both ends included; an `undefined` end is open. */
+export type DateRange = readonly [from: Date | undefined, to: Date | undefined];
+
+/**
+ * A column's filter value, by its `filterFn`: the text to find for `includesString`, the
+ * values to keep for `arrHas`, a {@link DateRange} for `inDateRange`.
+ */
+export type DataGridFilterValue = string | readonly string[] | DateRange;
+
+/**
+ * The filters `DataGrid.Root` applies, by column id. `undefined`, `''`, `[]` and a range open
+ * at both ends leave the column unfiltered. Each value must fit the column's `filterFn`; the
+ * grid doesn't check.
+ */
+export type DataGridFilters = Readonly<
+  Record<string, DataGridFilterValue | undefined>
+>;
+
+/**
+ * The filter functions that fit a column of `TValue`: `inDateRange` for Dates,
+ * `includesString` or `arrHas` for strings, and none otherwise.
+ */
+export type FilterFnFor<TValue> = unknown extends TValue
+  ? DataGridFilterFn
+  : [NonNullable<TValue>] extends [Date]
+    ? 'inDateRange'
+    : [NonNullable<TValue>] extends [string]
+      ? 'includesString' | 'arrHas'
+      : never;
+
 interface ColumnOptions<TRow, TValue> {
   /** Header text; also how the column is named to assistive tech and in visibility menus. */
   label: string;
@@ -21,6 +54,16 @@ interface ColumnOptions<TRow, TValue> {
    * locale-aware strings, then numbers, then Dates by time.
    */
   compare?: (a: TValue, b: TValue) => number;
+  /**
+   * How the column matches its value in `DataGrid.Root`'s `filters`. The grid draws no
+   * filter controls; build them yourself and pass their values in.
+   * - `includesString`: keeps rows whose text contains the value, ignoring case.
+   * - `arrHas`: keeps rows whose value is any of the given ones.
+   * - `inDateRange`: keeps rows within the {@link DateRange}.
+   *
+   * Rows without a value never match. Defaults to no filter.
+   */
+  filterFn?: FilterFnFor<TValue>;
 }
 
 /** A column that reads one property of the row; its `id` defaults to the key. */
@@ -61,8 +104,8 @@ export interface ColumnFactory<TRow> {
 
 /**
  * Returns a column factory for rows of type `TRow`. Each call infers the column's value
- * type from its `accessor`, so `cell` receives the right type, and widens the result so
- * columns of different value types fit in one array.
+ * type from its `accessor`, so `cell` receives the right type and `filterFn` only offers what
+ * fits it, and widens the result so columns of different value types fit in one array.
  *
  * Define the columns once (at module scope or in a memo): a new array re-processes every row.
  *

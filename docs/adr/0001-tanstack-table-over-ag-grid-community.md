@@ -5,5 +5,6 @@ The DataGrid is built on TanStack Table v9 (headless, MIT) and renders its own m
 ## Consequences
 
 - TanStack types stay internal: consumers configure columns through our own `createColumns<TRow>()`, so the engine can be swapped without breaking callers.
-- We write the rendering, filter inputs and pagination UI ourselves.
+- Column filters are named after TanStack's built-in filter functions (`includesString`, `arrHas`, `inDateRange`), limited to the three whose value shapes `DataGridFilters` types. They're our own string union, not TanStack types, so swapping engines means mapping three names, not rewriting callers.
+- We write the rendering and pagination UI ourselves; filter controls are the consumer's (ADR 0004).
 - v9 shipped in 2026-08; most examples online target v8 (`useReactTable`), so check the installed package's types and bundled skills rather than tutorials.

@@ -6,7 +6,7 @@ import { DataGridSkeleton } from './data-grid-skeleton';
 import { DataGridTable } from './data-grid-table';
 
 /**
- * A sortable, paginated table over in-memory rows of any type. Compose its parts under
+ * A sortable, filterable, paginated table over in-memory rows of any type. Compose its parts under
  * `Root`; while the rows load, render `Skeleton` in its place.
  *
  * @example

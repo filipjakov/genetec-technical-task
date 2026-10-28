@@ -5,6 +5,7 @@ import { Button, Stack, Text } from '@chakra-ui/react';
 import { DataGrid } from '@repo/ui/datagrid';
 import { Suspense, useState } from 'react';
 import { ClientOnly } from './client-only';
+import { EventsFilterBar } from './events-filter-bar';
 import { EventsGridScratchContent } from './events-grid-scratch-content';
 import { QueryErrorBoundary } from './query-error-boundary';
 
@@ -19,6 +20,10 @@ export function EventsGridScratch() {
       >
         {showEmpty ? 'Show Events' : 'Show no rows'}
       </Button>
+      {/* Client-only: it reads the URL, and its date picker reads today's date. */}
+      <ClientOnly fallback={null}>
+        <EventsFilterBar />
+      </ClientOnly>
       <QueryErrorBoundary
         fallback={(retry) => (
           <Stack role="alert" gap="2" borderWidth="1px" rounded="md" p="3">

@@ -1,15 +1,17 @@
 'use client';
 
 import { useTable, type ColumnDef } from '@tanstack/react-table';
-import { useLayoutEffect, useMemo, type ReactNode } from 'react';
-import { getColumnId, getColumnValue, type DataGridColumn } from './columns';
-import { compareValues } from './compare-values';
+import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 import {
-  DataGridContext,
-  type DataGridView,
-  type ErasedRow,
-} from './data-grid-context';
+  getColumnId,
+  getColumnValue,
+  type DataGridColumn,
+  type DataGridFilters,
+} from './columns';
+import { compareValues } from './compare-values';
+import { DataGridContext, type ErasedRow } from './data-grid-context';
 import { features, type Features } from './table-features';
+import { useTableStateOptions } from './use-table-state-options';
 
 /** A sort direction: `asc` puts the smallest value first. */
 export type SortDirection = 'asc' | 'desc';
@@ -20,6 +22,13 @@ export interface DataGridSort {
   direction: SortDirection;
 }
 
+/** The current page and its size. */
+export interface DataGridPageState {
+  /** Zero-based. */
+  pageIndex: number;
+  pageSize: number;
+}
+
 /** Props for {@link DataGridRoot}. */
 export interface DataGridRootProps<TRow extends object> {
   /** Every row; the grid processes them in memory. Pass a stable array. */
@@ -28,10 +37,33 @@ export interface DataGridRootProps<TRow extends object> {
   getRowId: (row: TRow) => string;
   /** The columns, in display order; see `createColumns`. Pass a stable array. */
   columns: readonly DataGridColumn<TRow>[];
-  /** The sort to start with. Defaults to the order of `rows`. */
+  /**
+   * The filters to apply, by column id; each column matches its value with its `filterFn`.
+   * The grid draws no filter controls, so this is one-way. Changing it returns to the first page.
+   */
+  filters?: DataGridFilters;
+  /** The sort, controlled; `null` is unsorted. Omit it to let the grid own the sort. */
+  sort?: DataGridSort | null;
+  /** Called with the new sort when a header is clicked. */
+  onSortChange?: (sort: DataGridSort | null) => void;
+  /** The sort to start with, when `sort` is omitted. Defaults to the order of `rows`. */
   initialSort?: DataGridSort;
-  /** Rows per page to start with. Defaults to 50. */
+  /** The page, controlled. Omit it to let the grid own the page. */
+  pagination?: DataGridPageState;
+  /**
+   * Called with the new page when the pager is used, and when the grid moves the page itself:
+   * to the first page when the filters or sort change, to the last one when the rows shrink.
+   */
+  onPaginationChange?: (pagination: DataGridPageState) => void;
+  /** Rows per page to start with, when `pagination` is omitted. Defaults to 50. */
   initialPageSize?: number;
+  /**
+   * The ids of the hidden columns, controlled. Omit it to let the grid own visibility,
+   * starting from the columns' `hidden` option.
+   */
+  hiddenColumns?: readonly string[];
+  /** Called with the new hidden column ids when a column is shown or hidden. */
+  onHiddenColumnsChange?: (hiddenColumns: string[]) => void;
   /** The grid's parts, such as `DataGrid.Table`, laid out as you like. */
   children: ReactNode;
 }
@@ -48,6 +80,8 @@ function toColumnDef(
     sortUndefined: 'last',
     sortFn: (rowA, rowB, columnId) =>
       compare(rowA.getValue(columnId), rowB.getValue(columnId)),
+    enableColumnFilter: column.filterFn !== undefined,
+    filterFn: column.filterFn,
   };
 }
 
@@ -56,8 +90,9 @@ function toColumnDef(
  * it. Renders no markup of its own. It needs its rows: while they load, render
  * `DataGrid.Skeleton` instead (e.g. as a Suspense fallback), and handle load errors outside it.
  *
- * Sort, page and column visibility are uncontrolled and survive changes to `rows`; the page
- * index is clamped when the rows shrink.
+ * Sort, page and column visibility are each uncontrolled unless their prop is passed, and
+ * survive changes to `rows`; the page index is clamped when the rows shrink. Filters come
+ * only from `filters`.
  *
  * @example
  * <DataGrid.Root
@@ -74,9 +109,8 @@ export function DataGridRoot<TRow extends object>({
   rows,
   getRowId,
   columns,
-  initialSort,
-  initialPageSize = 50,
   children,
+  ...stateProps
 }: DataGridRootProps<TRow>) {
   const erasedColumns = columns as readonly DataGridColumn<ErasedRow>[];
   const columnDefs = useMemo(
@@ -88,6 +122,12 @@ export function DataGridRoot<TRow extends object>({
     [erasedColumns],
   );
 
+  const { filtersKey, ...stateOptions } = useTableStateOptions(
+    erasedColumns,
+    columnsById,
+    stateProps,
+  );
+
   const table = useTable({
     features,
     columns: columnDefs,
@@ -96,39 +136,29 @@ export function DataGridRoot<TRow extends object>({
     enableMultiSort: false,
     // Keep the page when `rows` change (create/edit); it is clamped below instead.
     autoResetPageIndex: false,
-    initialState: {
-      columnVisibility: Object.fromEntries(
-        erasedColumns
-          .filter((column) => column.hidden)
-          .map((column) => [getColumnId(column), false]),
-      ),
-      sorting: initialSort
-        ? [
-            {
-              id: initialSort.columnId,
-              desc: initialSort.direction === 'desc',
-            },
-          ]
-        : [],
-      pagination: { pageIndex: 0, pageSize: initialPageSize },
-    },
+    ...stateOptions,
   });
 
   const { pageIndex } = table.state.pagination;
   const lastPageIndex = Math.max(0, table.getPageCount() - 1);
-  // A layout effect, so a page emptied by shrinking `rows` is never painted.
+  // Filters set on mount (e.g. from a shared link) keep the page they came with.
+  const appliedFiltersKey = useRef(filtersKey);
+  // A layout effect, so a page emptied by new filters or shrinking `rows` is never painted.
   useLayoutEffect(() => {
-    if (pageIndex > lastPageIndex) table.setPageIndex(lastPageIndex);
-  }, [table, pageIndex, lastPageIndex]);
-
-  const view: DataGridView = rows.length === 0 ? 'empty' : 'rows';
+    if (filtersKey !== appliedFiltersKey.current) {
+      appliedFiltersKey.current = filtersKey;
+      if (pageIndex !== 0) table.setPageIndex(0);
+    } else if (pageIndex > lastPageIndex) {
+      table.setPageIndex(lastPageIndex);
+    }
+  }, [table, filtersKey, pageIndex, lastPageIndex]);
 
   // `table` keeps its identity, so its state and rows are deps to re-render the parts.
   const { state } = table;
   const context = useMemo(
-    () => ({ table, columnsById, view }),
+    () => ({ table, columnsById }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table, state, rows, columnsById, view],
+    [table, state, rows, columnsById],
   );
 
   return <DataGridContext value={context}>{children}</DataGridContext>;

@@ -30,7 +30,7 @@ export interface DataGridTableProps {
  * columns overflow.
  */
 export function DataGridTable({ label, children }: DataGridTableProps) {
-  const { table, columnsById, view } = useDataGridContext('Table');
+  const { table, columnsById } = useDataGridContext('Table');
   // Set on a header click only, so the initial sort isn't announced on mount.
   const [announcement, setAnnouncement] = useState('');
 
@@ -79,7 +79,7 @@ export function DataGridTable({ label, children }: DataGridTableProps) {
           </tr>
         </thead>
         <tbody>
-          {view === 'rows' ? (
+          {table.getRowCount() > 0 ? (
             // Plain cells on the hot path: Chakra style props cost ~5-7 µs each (ADR 0002).
             table.getRowModel().rows.map((row) => (
               <tr key={row.id}>

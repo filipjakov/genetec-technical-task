@@ -13,6 +13,7 @@ export interface DataGridNoMatchesProps {
  * children only while that state applies.
  */
 export function DataGridNoMatches({ children }: DataGridNoMatchesProps) {
-  const { view } = useDataGridContext('NoMatches');
-  return view === 'no-matches' ? children : null;
+  const { table } = useDataGridContext('NoMatches');
+  const hasRows = table.getCoreRowModel().rows.length > 0;
+  return hasRows && table.getRowCount() === 0 ? children : null;
 }
