@@ -5,6 +5,7 @@ import { Badge, Button, Heading, HStack, Stack, Text } from '@chakra-ui/react';
 import { CATEGORIES, SEVERITIES } from '@repo/ui/event-form';
 import { EventsGridScratch } from './_components/events-grid-scratch';
 import { EventsReadout } from './_components/events-readout';
+import { EventsTimelineScratch } from './_components/events-timeline-scratch';
 import { toaster } from './_components/toaster';
 
 export default function Page() {
@@ -13,6 +14,7 @@ export default function Page() {
       <Heading as="h1">Event Explorer</Heading>
       <EventsReadout />
       <EventsGridScratch />
+      <EventsTimelineScratch />
       <Text color="fg.muted">
         Theme scratch page. Switch the OS colour mode to check dark.
       </Text>
