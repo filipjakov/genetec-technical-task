@@ -8,6 +8,8 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@chakra-ui/react": "3.37.0",
+    "@emotion/react": "11.14.0",
     "@repo/ui": "workspace:*",
     "next": "16.4.3",
     "react": "19.3.1",
