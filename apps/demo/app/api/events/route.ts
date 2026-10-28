@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
-import { create, list } from '../../../src/server/events-db';
-import { parseEventInput } from '../../../src/server/parse-event-input';
+import { create, list } from './_server/events-db';
+import { parseEventInput } from './_server/parse-event-input';
 
 // `now` dates the generated Events and bounds validation, so never cache.
 export const dynamic = 'force-dynamic';

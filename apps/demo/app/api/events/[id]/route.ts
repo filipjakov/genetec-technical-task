@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
-import { update } from '../../../../src/server/events-db';
-import { parseEventInput } from '../../../../src/server/parse-event-input';
+import { update } from '../_server/events-db';
+import { parseEventInput } from '../_server/parse-event-input';
 
 export const dynamic = 'force-dynamic';
 
