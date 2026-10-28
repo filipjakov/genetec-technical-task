@@ -13,6 +13,14 @@ interface ColumnOptions<TRow, TValue> {
    * it runs for every visible cell, and each Chakra component costs ~5-7 µs per render.
    */
   cell?: (value: TValue, row: TRow) => ReactNode;
+  /** Whether the header sorts the rows. Defaults to `true`. */
+  sortable?: boolean;
+  /**
+   * Orders two values ascending (negative when `a` comes first); the grid reverses it for
+   * descending. Never called with `null`/`undefined`, which always sort last. Defaults to
+   * locale-aware strings, then numbers, then Dates by time.
+   */
+  compare?: (a: TValue, b: TValue) => number;
 }
 
 /** A column that reads one property of the row; its `id` defaults to the key. */
@@ -73,4 +81,13 @@ export function createColumns<TRow>(): ColumnFactory<TRow> {
 /** The column's id: its `id`, else its key accessor. */
 export function getColumnId<TRow>(column: DataGridColumn<TRow>): string {
   return column.id ?? (column.accessor as string);
+}
+
+/** The column's value for `row`, as its `cell` receives it. */
+export function getColumnValue<TRow>(
+  column: DataGridColumn<TRow>,
+  row: TRow,
+): unknown {
+  const { accessor } = column;
+  return typeof accessor === 'function' ? accessor(row) : row[accessor];
 }
