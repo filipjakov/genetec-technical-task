@@ -2,10 +2,8 @@
 
 // Scratch page until the demo shell slice: each component slice mounts its work here.
 import { Badge, Button, Heading, HStack, Stack, Text } from '@chakra-ui/react';
+import { CATEGORIES, SEVERITIES } from '@repo/ui/event-form';
 import { toaster } from '../src/toaster';
-
-const SEVERITIES = ['info', 'low', 'medium', 'high', 'critical'];
-const CATEGORIES = ['access', 'video', 'intrusion', 'system'];
 
 export default function Page() {
   return (
