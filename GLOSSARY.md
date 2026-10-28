@@ -17,7 +17,7 @@ How urgently an Event needs an operator's attention, from info to critical.
 _Avoid_: Priority, level
 
 **Timeline Window**:
-The date range of Events the Timeline renders; a slice of the full Event collection, which the DataGrid shows in full.
+The date range of Events the Timeline covers: the last 30 days. The DataGrid covers the full Event collection; filters narrow both.
 _Avoid_: Subset, page
 
 **Day Group**:
