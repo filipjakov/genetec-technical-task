@@ -58,7 +58,7 @@ export function DateRangeFilterInput({
 
   return (
     <Fieldset.Root width="auto">
-      <Fieldset.Legend textStyle="sm" fontWeight="medium">
+      <Fieldset.Legend textStyle="xs" fontWeight="medium">
         {label}
       </Fieldset.Legend>
       <DatePicker.Root

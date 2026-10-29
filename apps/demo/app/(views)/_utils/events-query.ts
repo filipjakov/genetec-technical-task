@@ -29,6 +29,11 @@ function timelineWindowStart(): Date {
   );
 }
 
+/** Whether `event` is in the Timeline Window; an Event can only fall outside it by being older. */
+export function isInTimelineWindow(event: Event): boolean {
+  return event.occurredAt.getTime() >= timelineWindowStart().getTime();
+}
+
 /**
  * The Timeline Window: Events from the start of the viewer-local day 29 days
  * ago onwards. Module-level so it stays a stable `select`; Query re-runs it

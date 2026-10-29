@@ -2,8 +2,9 @@
 
 import { Box, HStack, Stack, Text } from '@chakra-ui/react';
 import type { Event } from '@repo/ui/event-form';
-import { createTimeline } from '@repo/ui/timeline';
+import { createTimeline, type TimelineHandle } from '@repo/ui/timeline';
 import { useSuspenseQuery } from '@tanstack/react-query';
+import type { Ref } from 'react';
 import {
   eventsQueryOptions,
   selectTimelineWindow,
@@ -31,11 +32,16 @@ const getEventLabel = (event: Event) =>
     .join(', ');
 const formatEventCount = (count: number) =>
   count === 1 ? '1 event' : `${count} events`;
-// Editing lands with the Event dialog.
-const editEvent = () => {};
+
+export interface EventsTimelineProps {
+  /** Opens an Event for editing; pass a stable function. */
+  onEdit: (event: Event) => void;
+  /** Brings focus back to the Timeline, e.g. when the Edit dialog closes. */
+  ref?: Ref<TimelineHandle>;
+}
 
 /** The Timeline Window's Events, unfiltered: the window is the Timeline's only narrowing. */
-export function EventsTimeline() {
+export function EventsTimeline({ onEdit, ref }: EventsTimelineProps) {
   const { data: windowEvents } = useSuspenseQuery({
     ...eventsQueryOptions,
     select: selectTimelineWindow,
@@ -43,11 +49,12 @@ export function EventsTimeline() {
 
   return (
     <EventTimeline.Root
+      ref={ref}
       items={windowEvents}
       getId={getEventId}
       getTimestamp={getOccurredAt}
       getLabel={getEventLabel}
-      onItemActivate={editEvent}
+      onItemActivate={onEdit}
       formatCount={formatEventCount}
     >
       <EventTimeline.KeyHint itemNoun="event" activateLabel="edit" />

@@ -4,8 +4,12 @@ import type { ReactNode } from 'react';
 import { ClientOnly } from './_components/client-only';
 import { DemoStatesLinks } from './_components/demo-states-links';
 import { ViewsNav } from './_components/views-nav';
+import { EventDialogViewport } from './_components/event-dialog-viewport';
 
-/** The views' shell: header with the views nav, the page, and the Demo states footer. */
+/**
+ * The views' shell: header with the views nav, the page, and the Demo states footer, plus
+ * the Event dialog's viewport that both pages open it into.
+ */
 export default function ViewsLayout({ children }: { children: ReactNode }) {
   return (
     <Flex
@@ -32,6 +36,7 @@ export default function ViewsLayout({ children }: { children: ReactNode }) {
         <ViewsNav />
       </Flex>
       {children}
+      <EventDialogViewport />
       <footer>
         {/* Client-only: its links carry the current page's URL params. */}
         <ClientOnly fallback={null}>
