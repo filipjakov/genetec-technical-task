@@ -2,25 +2,28 @@
 
 import { Box, Fieldset, HStack, SegmentGroup } from '@chakra-ui/react';
 import { useId } from 'react';
-import { SEVERITIES, type Severity } from './event';
+import {
+  isSeverity,
+  SEVERITIES,
+  SEVERITY_LABELS,
+  type Severity,
+} from './event';
+import type { FieldFocusHandle, FormFieldProps } from './form-field';
 
-interface SeverityFieldProps {
-  value: Severity;
-  onChange: (value: Severity) => void;
-}
+type SeverityFieldProps = Pick<
+  FormFieldProps<Severity, FieldFocusHandle>,
+  'value' | 'onChange'
+>;
 
 const items = SEVERITIES.map((severity) => ({
   value: severity,
   label: (
     <HStack gap="1.5">
       <Box boxSize="2" borderRadius="full" bg={`severity.${severity}`} />
-      {severity.charAt(0).toUpperCase() + severity.slice(1)}
+      {SEVERITY_LABELS[severity]}
     </HStack>
   ),
 }));
-
-const isSeverity = (value: string | null): value is Severity =>
-  SEVERITIES.some((severity) => severity === value);
 
 /** The `Severity` choice of the Event Form; always has a value, so it never errors. */
 export function SeverityField({ value, onChange }: SeverityFieldProps) {

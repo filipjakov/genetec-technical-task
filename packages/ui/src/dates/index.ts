@@ -1,7 +1,6 @@
 // Private to @repo/ui (not in the package `exports`). All dates are read in the viewer's
 // locale and time zone; formatters are created once, since `Intl` constructors are costly
 // at 100k rows.
-import { CalendarDateTime, getLocalTimeZone } from '@internationalized/date';
 
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium',
@@ -27,11 +26,6 @@ export function toDayKey(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-/** Whether `date` is later than `now`. */
-export function isFutureDate(date: Date, now: Date = new Date()): boolean {
-  return date.getTime() > now.getTime();
-}
-
 /** Date and time, e.g. `3 Mar 2026, 14:05`. */
 export function formatDateTime(date: Date): string {
   return dateTimeFormat.format(date);
@@ -55,20 +49,4 @@ export function formatDayLabel(date: Date, now: Date = new Date()): string {
   if (offset === undefined) return dayFormat.format(date);
   const label = relativeDayFormat.format(offset, 'day');
   return label.charAt(0).toUpperCase() + label.slice(1);
-}
-
-/** `date` as the minute-precision local date-time the Event Form edits; seconds are dropped. */
-export function toFormDateTime(date: Date): CalendarDateTime {
-  return new CalendarDateTime(
-    date.getFullYear(),
-    date.getMonth() + 1,
-    date.getDate(),
-    date.getHours(),
-    date.getMinutes(),
-  );
-}
-
-/** The instant a form date-time names in the viewer's time zone. */
-export function fromFormDateTime(value: CalendarDateTime): Date {
-  return value.toDate(getLocalTimeZone());
 }

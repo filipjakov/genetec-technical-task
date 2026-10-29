@@ -6,6 +6,8 @@ import { useMemo } from 'react';
 interface SelectFilterInputProps<TOption extends string> {
   /** Every choice, in display order. */
   options: readonly TOption[];
+  /** How each option reads on screen. */
+  labels: Readonly<Record<TOption, string>>;
   /** The picked options; `[]` when unfiltered. */
   value: readonly TOption[];
   onChange: (value: TOption[]) => void;
@@ -15,6 +17,7 @@ interface SelectFilterInputProps<TOption extends string> {
 /** A multi-select that shows every row while nothing is picked. */
 export function SelectFilterInput<TOption extends string>({
   options,
+  labels,
   value,
   onChange,
   label,
@@ -22,9 +25,12 @@ export function SelectFilterInput<TOption extends string>({
   const collection = useMemo(
     () =>
       createListCollection({
-        items: options.map((option) => ({ value: option, label: option })),
+        items: options.map((option) => ({
+          value: option,
+          label: labels[option],
+        })),
       }),
-    [options],
+    [options, labels],
   );
 
   return (

@@ -1,4 +1,9 @@
-import { CATEGORIES, SEVERITIES, type Event } from '@repo/ui/event-form';
+import {
+  CATEGORIES,
+  SEVERITIES,
+  TITLE_MAX_LENGTH,
+  type Event,
+} from '@repo/ui/event-form';
 import { z } from 'zod';
 
 const CLOCK_SKEW_MS = 5 * 60_000;
@@ -13,7 +18,7 @@ const optionalText = z
 function eventInputSchema(now: Date) {
   return z.object({
     id: z.uuid(),
-    title: z.string().trim().min(1),
+    title: z.string().trim().min(1).max(TITLE_MAX_LENGTH),
     occurredAt: z.iso
       .datetime({ offset: true })
       .transform((value) => new Date(value))

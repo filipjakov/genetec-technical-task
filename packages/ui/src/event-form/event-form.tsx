@@ -1,18 +1,10 @@
 'use client';
 
-import {
-  Button,
-  Field,
-  HStack,
-  Input,
-  Stack,
-  Text,
-  Textarea,
-} from '@chakra-ui/react';
+import { Button, HStack, Stack, Text } from '@chakra-ui/react';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useRef, useState } from 'react';
 import { CategoryField } from './category-field';
-import { DateTimeField, type FieldFocusHandle } from './date-time-field';
+import { DateTimeField } from './date-time-field';
 import type { Event, EventFormValues } from './event';
 import {
   toEventDraft,
@@ -20,22 +12,25 @@ import {
   validateEventDraft,
   type EventDraft,
 } from './event-draft';
+import { toFieldProps, type FieldFocusHandle } from './form-field';
+import { OptionalTextField } from './optional-text-field';
 import { SeverityField } from './severity-field';
+import { TitleField } from './title-field';
 
 /** Props for {@link EventForm}. */
 export interface EventFormProps {
   /** The Event to edit; the form adds a new Event when absent. Remount (`key`) to switch Events. */
   event?: Event;
-  /** Called on a valid Save with trimmed values, empty optional fields left out. */
+  /**
+   * Called on a valid Save with trimmed values, empty optional fields left out. Called once
+   * per mount, so a second click while the dialog closes can't save twice.
+   */
   onSave: (values: EventFormValues) => void;
   /** Called on Cancel; the form discards its edits. */
   onCancel: () => void;
   /** The submit button's text. Defaults to `Save`. */
   saveLabel?: string;
 }
-
-const firstError = (errors: readonly unknown[]) =>
-  typeof errors[0] === 'string' ? errors[0] : undefined;
 
 /**
  * The Add / Edit form for one Event, with controlled inputs. Nothing is validated until the
@@ -56,6 +51,7 @@ export function EventForm({
   const titleRef = useRef<HTMLInputElement>(null);
   const occurredAtRef = useRef<FieldFocusHandle>(null);
   const categoryRef = useRef<HTMLButtonElement>(null);
+  const savedRef = useRef(false);
 
   const form = useForm({
     defaultValues,
@@ -63,18 +59,25 @@ export function EventForm({
     validators: {
       onDynamic: ({ value }) => validateEventDraft(value, new Date()),
     },
-    onSubmit: ({ value }) => onSave(toEventFormValues(value)),
+    onSubmit: ({ value }) => {
+      if (savedRef.current) return;
+      savedRef.current = true;
+      onSave(toEventFormValues(value));
+    },
     onSubmitInvalid: ({ formApi }) => {
       // In form order; Severity always has a value, Location and Description never error.
-      const targets: [keyof EventDraft, FieldFocusHandle | null][] = [
-        ['title', titleRef.current],
-        ['occurredAt', occurredAtRef.current],
-        ['category', categoryRef.current],
+      const targets: {
+        name: keyof EventDraft;
+        target: FieldFocusHandle | null;
+      }[] = [
+        { name: 'title', target: titleRef.current },
+        { name: 'occurredAt', target: occurredAtRef.current },
+        { name: 'category', target: categoryRef.current },
       ];
       const invalid = targets.find(
-        ([name]) => (formApi.getFieldMeta(name)?.errors.length ?? 0) > 0,
+        ({ name }) => (formApi.getFieldMeta(name)?.errors.length ?? 0) > 0,
       );
-      invalid?.[1]?.focus();
+      invalid?.target?.focus();
     },
   });
 
@@ -95,48 +98,24 @@ export function EventForm({
         </Text>
 
         <form.Field name="title">
-          {(field) => {
-            const error = firstError(field.state.meta.errors);
-            return (
-              <Field.Root invalid={error !== undefined} required>
-                <Field.Label>
-                  Title
-                  <Field.RequiredIndicator />
-                </Field.Label>
-                <Input
-                  ref={titleRef}
-                  name={field.name}
-                  maxLength={120}
-                  autoComplete="off"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                />
-                <Field.ErrorText>{error}</Field.ErrorText>
-              </Field.Root>
-            );
-          }}
+          {(field) => (
+            <TitleField
+              ref={titleRef}
+              {...toFieldProps(field)}
+              onBlur={field.handleBlur}
+            />
+          )}
         </form.Field>
 
         <form.Field name="occurredAt">
           {(field) => (
-            <DateTimeField
-              ref={occurredAtRef}
-              value={field.state.value}
-              onChange={field.handleChange}
-              error={firstError(field.state.meta.errors)}
-            />
+            <DateTimeField ref={occurredAtRef} {...toFieldProps(field)} />
           )}
         </form.Field>
 
         <form.Field name="category">
           {(field) => (
-            <CategoryField
-              ref={categoryRef}
-              value={field.state.value}
-              onChange={field.handleChange}
-              error={firstError(field.state.meta.errors)}
-            />
+            <CategoryField ref={categoryRef} {...toFieldProps(field)} />
           )}
         </form.Field>
 
@@ -151,31 +130,26 @@ export function EventForm({
 
         <form.Field name="location">
           {(field) => (
-            <Field.Root>
-              <Field.Label>Location</Field.Label>
-              <Input
-                name={field.name}
-                autoComplete="off"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={field.handleBlur}
-              />
-            </Field.Root>
+            <OptionalTextField
+              label="Location"
+              name={field.name}
+              value={field.state.value}
+              onChange={field.handleChange}
+              onBlur={field.handleBlur}
+            />
           )}
         </form.Field>
 
         <form.Field name="description">
           {(field) => (
-            <Field.Root>
-              <Field.Label>Description</Field.Label>
-              <Textarea
-                name={field.name}
-                rows={4}
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={field.handleBlur}
-              />
-            </Field.Root>
+            <OptionalTextField
+              label="Description"
+              name={field.name}
+              multiline
+              value={field.state.value}
+              onChange={field.handleChange}
+              onBlur={field.handleBlur}
+            />
           )}
         </form.Field>
 

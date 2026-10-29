@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, HStack, Stack, Text } from '@chakra-ui/react';
-import type { Event } from '@repo/ui/event-form';
+import { CATEGORY_LABELS, type Event } from '@repo/ui/event-form';
 import { createTimeline, type TimelineHandle } from '@repo/ui/timeline';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import type { Ref } from 'react';
@@ -94,7 +94,9 @@ export function EventsTimeline({ onEdit, ref }: EventsTimelineProps) {
                   </Text>
                 </HStack>
                 <Text color="fg.muted" truncate>
-                  {[event.category, event.location].filter(Boolean).join(' · ')}
+                  {[CATEGORY_LABELS[event.category], event.location]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </Text>
               </Stack>
             )}

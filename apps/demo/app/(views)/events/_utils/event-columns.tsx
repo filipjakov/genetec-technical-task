@@ -1,6 +1,11 @@
 import { Button } from '@chakra-ui/react';
 import { createColumns } from '@repo/ui/datagrid';
-import { SEVERITIES, type Event } from '@repo/ui/event-form';
+import {
+  CATEGORY_LABELS,
+  SEVERITIES,
+  SEVERITY_LABELS,
+  type Event,
+} from '@repo/ui/event-form';
 import type { EventColumnId } from './events-view-params';
 
 const col = createColumns<Event>();
@@ -26,13 +31,14 @@ export const eventColumns = [
     accessor: 'category',
     label: 'Category',
     width: '9rem',
+    cell: (category) => CATEGORY_LABELS[category],
     filterFn: 'arrHas',
   }),
   col({
     accessor: 'severity',
     label: 'Severity',
     width: '9rem',
-    cell: (severity) => severity.toUpperCase(),
+    cell: (severity) => SEVERITY_LABELS[severity],
     compare: (a, b) => SEVERITIES.indexOf(a) - SEVERITIES.indexOf(b),
     filterFn: 'arrHas',
   }),

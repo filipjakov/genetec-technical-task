@@ -1,7 +1,12 @@
 'use client';
 
 import { Box, Button, Flex, Stack } from '@chakra-ui/react';
-import { CATEGORIES, SEVERITIES } from '@repo/ui/event-form';
+import {
+  CATEGORIES,
+  CATEGORY_LABELS,
+  SEVERITIES,
+  SEVERITY_LABELS,
+} from '@repo/ui/event-form';
 import { useId, useState, type ReactNode } from 'react';
 import { useClearEventsFilters } from '../_hooks/use-clear-events-filters';
 import { useEventsView } from '../_hooks/use-events-view';
@@ -55,6 +60,7 @@ export function EventsFilterBar({ children }: { children?: ReactNode }) {
           <SelectFilterInput
             label="Category"
             options={CATEGORIES}
+            labels={CATEGORY_LABELS}
             value={view.category}
             onChange={(category) => setView({ category })}
           />
@@ -63,6 +69,7 @@ export function EventsFilterBar({ children }: { children?: ReactNode }) {
           <SelectFilterInput
             label="Severity"
             options={SEVERITIES}
+            labels={SEVERITY_LABELS}
             value={view.severity}
             onChange={(severity) => setView({ severity })}
           />

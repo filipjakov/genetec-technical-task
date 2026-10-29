@@ -1,26 +1,24 @@
 'use client';
 
 import { createListCollection, Field, Select } from '@chakra-ui/react';
-import type { Ref } from 'react';
-import { CATEGORIES, type Category } from './event';
+import { useId } from 'react';
+import {
+  CATEGORIES,
+  CATEGORY_LABELS,
+  isCategory,
+  type Category,
+} from './event';
+import type { FormFieldProps } from './form-field';
 
-interface CategoryFieldProps {
-  value: '' | Category;
-  onChange: (value: '' | Category) => void;
-  error: string | undefined;
-  /** The trigger button, which focus-first-invalid targets. */
-  ref: Ref<HTMLButtonElement>;
-}
+/** `ref` is the trigger button, which focus-first-invalid targets. */
+type CategoryFieldProps = FormFieldProps<Category | null, HTMLButtonElement>;
 
 const collection = createListCollection({
   items: CATEGORIES.map((category) => ({
     value: category,
-    label: category.charAt(0).toUpperCase() + category.slice(1),
+    label: CATEGORY_LABELS[category],
   })),
 });
-
-const isCategory = (value: string | undefined): value is Category =>
-  CATEGORIES.some((category) => category === value);
 
 /** The required `Category` picker of the Event Form. */
 export function CategoryField({
@@ -29,13 +27,18 @@ export function CategoryField({
   error,
   ref,
 }: CategoryFieldProps) {
+  const errorId = useId();
   return (
-    <Field.Root invalid={error !== undefined} required>
+    <Field.Root
+      invalid={error !== undefined}
+      required
+      ids={{ errorText: errorId }}
+    >
       <Select.Root
         collection={collection}
-        value={value === '' ? [] : [value]}
+        value={value === null ? [] : [value]}
         onValueChange={({ value: [next] }) =>
-          onChange(isCategory(next) ? next : '')
+          onChange(isCategory(next) ? next : null)
         }
         positioning={{ sameWidth: true }}
       >
@@ -45,7 +48,11 @@ export function CategoryField({
           <Field.RequiredIndicator />
         </Select.Label>
         <Select.Control>
-          <Select.Trigger ref={ref}>
+          {/* Ark's Select doesn't take `aria-describedby` from the Field, so it's set here. */}
+          <Select.Trigger
+            ref={ref}
+            aria-describedby={error === undefined ? undefined : errorId}
+          >
             <Select.ValueText placeholder="Choose a category" />
           </Select.Trigger>
           <Select.IndicatorGroup>

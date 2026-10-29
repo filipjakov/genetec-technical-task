@@ -2,20 +2,14 @@
 
 import { DateInput, Field, useDateInput } from '@chakra-ui/react';
 import { CalendarDateTime } from '@internationalized/date';
-import { useId, useImperativeHandle, type Ref } from 'react';
+import { useId, useImperativeHandle } from 'react';
+import type { FieldFocusHandle, FormFieldProps } from './form-field';
 
-/** What the Event Form calls to move focus into a field. */
-export interface FieldFocusHandle {
-  focus(): void;
-}
-
-interface DateTimeFieldProps {
-  value: CalendarDateTime | null;
-  onChange: (value: CalendarDateTime | null) => void;
-  error: string | undefined;
-  /** `focus()` moves focus to the first segment. */
-  ref: Ref<FieldFocusHandle>;
-}
+/** `ref`'s `focus()` moves focus to the first segment. */
+type DateTimeFieldProps = FormFieldProps<
+  CalendarDateTime | null,
+  FieldFocusHandle
+>;
 
 const viewerLocale = new Intl.DateTimeFormat().resolvedOptions().locale;
 
@@ -54,9 +48,25 @@ export function DateTimeField({
           <Field.RequiredIndicator />
         </DateInput.Label>
         <DateInput.Control>
-          <DateInput.Segments
-            aria-describedby={error === undefined ? undefined : errorId}
-          />
+          <DateInput.SegmentGroup
+            // The segments aren't inputs, so Enter doesn't submit the form on its own.
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.currentTarget.closest('form')?.requestSubmit();
+              }
+            }}
+          >
+            {dateInput.getSegments().map((segment, index) => (
+              <DateInput.Segment
+                key={index}
+                segment={segment}
+                // On each segment, since focus lands on a segment, not on the group.
+                aria-describedby={error === undefined ? undefined : errorId}
+                aria-required={segment.type === 'literal' ? undefined : true}
+              />
+            ))}
+          </DateInput.SegmentGroup>
         </DateInput.Control>
       </DateInput.RootProvider>
       <Field.ErrorText>{error}</Field.ErrorText>
