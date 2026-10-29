@@ -19,17 +19,22 @@ export const eventsQueryOptions = queryOptions({
   retry: 1,
 });
 
+/** Where the Timeline Window starts: the viewer-local midnight 29 days ago. */
+function timelineWindowStart(): Date {
+  const now = new Date();
+  return new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - (WINDOW_DAYS - 1),
+  );
+}
+
 /**
  * The Timeline Window: Events from the start of the viewer-local day 29 days
  * ago onwards. Module-level so it stays a stable `select`; Query re-runs it
  * only when the cached array changes.
  */
 export function selectTimelineWindow(events: Event[]): Event[] {
-  const now = new Date();
-  const start = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() - (WINDOW_DAYS - 1),
-  ).getTime();
+  const start = timelineWindowStart().getTime();
   return events.filter((event) => event.occurredAt.getTime() >= start);
 }

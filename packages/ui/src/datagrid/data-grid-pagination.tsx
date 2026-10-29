@@ -70,7 +70,12 @@ export function DataGridPagination({
           page={pageIndex + 1}
           onPageChange={({ page }) => setPageIndex(page - 1)}
         >
-          <ButtonGroup variant="ghost" size="sm" attached={false}>
+          <ButtonGroup
+            variant="ghost"
+            size={{ base: 'xs', sm: 'sm' }}
+            attached={false}
+            flexWrap="wrap"
+          >
             <Pagination.PrevTrigger asChild>
               <IconButton>‹</IconButton>
             </Pagination.PrevTrigger>

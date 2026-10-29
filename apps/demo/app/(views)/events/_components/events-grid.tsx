@@ -1,6 +1,5 @@
 'use client';
 
-// Throwaway scratch grid for the DataGrid slices; replaced by the demo shell.
 import { Button, HStack, Text } from '@chakra-ui/react';
 import { DataGrid } from '@repo/ui/datagrid';
 import type { Event } from '@repo/ui/event-form';
@@ -8,16 +7,14 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { useClearEventsFilters } from '../_hooks/use-clear-events-filters';
 import { useEventsView } from '../_hooks/use-events-view';
-import { eventColumns } from '../_utils/event-columns';
-import { eventsQueryOptions } from '../_utils/events-query';
+import { eventsQueryOptions } from '../../_utils/events-query';
 import {
   isEventColumnId,
   loadEventsFilters,
   PAGE_SIZES,
 } from '../_utils/events-view-params';
 import { toGridFilters } from '../_utils/to-grid-filters';
-
-const NO_EVENTS: Event[] = [];
+import { eventColumns } from '../_utils/event-columns';
 
 const getEventId = (event: Event) => event.id;
 
@@ -25,11 +22,8 @@ const getEventId = (event: Event) => event.id;
 const toPageSize = (size: number) =>
   PAGE_SIZES.find((pageSize) => pageSize === size) ?? PAGE_SIZES[0];
 
-export function EventsGridScratchContent({
-  showEmpty,
-}: {
-  showEmpty: boolean;
-}) {
+/** Every Event in a DataGrid whose view (filters, sort, page, hidden columns) lives in the URL. */
+export function EventsGrid() {
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
   // The view lives in the URL (see EventsFilterBar); the grid only reads and reports it.
   const [view, setView] = useEventsView();
@@ -40,7 +34,7 @@ export function EventsGridScratchContent({
 
   return (
     <DataGrid.Root
-      rows={showEmpty ? NO_EVENTS : events}
+      rows={events}
       getRowId={getEventId}
       columns={eventColumns}
       filters={toGridFilters(filters)}

@@ -26,7 +26,16 @@ export function DataGridSkeleton({
   rowCount = 50,
 }: DataGridSkeletonProps) {
   return (
-    <Box role="status" aria-busy="true">
+    // A flex column like the frame's own parent, so the frame still shrinks to the space left.
+    <Box
+      role="status"
+      aria-busy="true"
+      display="flex"
+      flexDirection="column"
+      flex="0 1 auto"
+      minHeight="0"
+      maxHeight="full"
+    >
       <VisuallyHidden>{label}</VisuallyHidden>
       <DataGridFrame aria-hidden="true">
         <thead>

@@ -13,3 +13,4 @@ The DataGrid keeps TanStack's filter → sort → page engine but draws no filte
 - A filter applies whether or not its column is visible, and the built-in `NoMatches` has no Clear filters button, because the grid can't write filters.
 - The demo's Columns popover sits in the filter bar, outside `DataGrid.Root`, and writes hidden columns to the URL directly rather than through `useDataGrid().columns`, so the demo repeats the grid's rule that the last visible column can't be hidden.
 - Default sort and default hidden columns are the demo's nuqs parser defaults, not column options, and params equal to their default are dropped from the URL.
+- The filters are the DataGrid's alone. The Timeline takes no filters and shows the whole Timeline Window; its focus stays uncontrolled and out of the URL.

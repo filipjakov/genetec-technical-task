@@ -1,7 +1,7 @@
 'use client';
 
 import { VisuallyHidden } from '@chakra-ui/react';
-import { useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { getColumnId, getColumnValue } from './columns';
 import { DataGridColumnHeader } from './data-grid-column-header';
 import { useDataGridContext } from './data-grid-context';
@@ -26,8 +26,9 @@ export interface DataGridTableProps {
  * The grid as a `<table>`: one header per visible column, then the current page of rows or
  * the state that applies. Sortable headers are buttons that cycle ascending → descending →
  * unsorted and announce the new order. Cells truncate with an ellipsis (the full text is in
- * their `title`), and the table scrolls horizontally inside its own container when the
- * columns overflow.
+ * their `title`). The table scrolls inside its own container: horizontally when the columns
+ * overflow, and vertically under a sticky header row when its parent caps its height. A new
+ * page, sort or filter scrolls it back to the top.
  */
 export function DataGridTable({ label, children }: DataGridTableProps) {
   const { table, columnsById } = useDataGridContext('Table');
@@ -39,6 +40,14 @@ export function DataGridTable({ label, children }: DataGridTableProps) {
     .map((column) => columnsById.get(column.id)!);
   const widths = columns.map((column) => column.width ?? DEFAULT_COLUMN_WIDTH);
   const [sort] = table.state.sorting;
+  const { pageIndex, pageSize } = table.state.pagination;
+  const { columnFilters } = table.state;
+
+  // A new page, sort or filter starts at the top; editing a row keeps the scroll position.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pageIndex, pageSize, sort?.id, sort?.desc, columnFilters]);
 
   const sortBy = (columnId: string, columnLabel: string) => {
     const current = sort?.id === columnId && (sort.desc ? 'desc' : 'asc');
@@ -55,7 +64,10 @@ export function DataGridTable({ label, children }: DataGridTableProps) {
 
   return (
     <>
-      <DataGridFrame width={`calc(${widths.join(' + ')})`}>
+      <DataGridFrame
+        scrollRef={scrollRef}
+        width={`calc(${widths.join(' + ')})`}
+      >
         <VisuallyHidden as="caption">{label}</VisuallyHidden>
         <colgroup>
           {widths.map((width, index) => (

@@ -1,60 +1,34 @@
-'use client';
+import { Heading, HStack, Link, Stack, Text } from '@chakra-ui/react';
+import NextLink from 'next/link';
 
-// Scratch page until the demo shell slice: each component slice mounts its work here.
-import { Badge, Button, Heading, HStack, Stack, Text } from '@chakra-ui/react';
-import { CATEGORIES, SEVERITIES } from '@repo/ui/event-form';
-import { EventFormScratch } from './_components/event-form-scratch';
-import { EventsGridScratch } from './_components/events-grid-scratch';
-import { EventsReadout } from './_components/events-readout';
-import { EventsTimelineScratch } from './_components/events-timeline-scratch';
-import { toaster } from './_components/toaster';
-
-export default function Page() {
+export default function HomePage() {
   return (
-    <Stack as="main" gap="4" p="6">
-      <Heading as="h1">Event Explorer</Heading>
-      <EventsReadout />
-      <EventFormScratch />
-      <EventsGridScratch />
-      <EventsTimelineScratch />
-      <Text color="fg.muted">
-        Theme scratch page. Switch the OS colour mode to check dark.
+    <Stack
+      as="main"
+      gap="4"
+      maxWidth="40rem"
+      paddingInline={{ base: '4', md: '6' }}
+      paddingBlock="8"
+    >
+      <Heading as="h1" size="2xl">
+        Event Explorer
+      </Heading>
+      <Text>
+        100,000 security Events, browsable as a sortable, filterable grid or as
+        a day-by-day timeline of the last 30 days.
       </Text>
-      <HStack wrap="wrap">
-        {SEVERITIES.map((severity) => (
-          <Badge
-            key={severity}
-            variant="outline"
-            color={`severity.${severity}`}
-          >
-            {severity}
-          </Badge>
-        ))}
+      <HStack as="ul" gap="6" listStyleType="none">
+        <li>
+          <Link asChild variant="underline">
+            <NextLink href="/events">Events grid</NextLink>
+          </Link>
+        </li>
+        <li>
+          <Link asChild variant="underline">
+            <NextLink href="/timeline">Timeline</NextLink>
+          </Link>
+        </li>
       </HStack>
-      <HStack wrap="wrap">
-        {CATEGORIES.map((category) => (
-          <Badge
-            key={category}
-            variant="outline"
-            color={`category.${category}`}
-          >
-            {category}
-          </Badge>
-        ))}
-      </HStack>
-      <Button
-        alignSelf="start"
-        onClick={() =>
-          toaster.create({
-            type: 'success',
-            title: 'Event saved.',
-            closable: true,
-            duration: 6000,
-          })
-        }
-      >
-        Show toast
-      </Button>
     </Stack>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Event } from '@repo/ui/event-form';
-import { toaster } from '../_components/toaster';
+import { toaster } from '../../_components/toaster';
 import { eventsQueryOptions } from '../_utils/events-query';
 
 const { queryKey } = eventsQueryOptions;
