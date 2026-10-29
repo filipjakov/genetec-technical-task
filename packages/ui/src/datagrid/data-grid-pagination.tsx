@@ -37,7 +37,10 @@ function formatRange({
 
 /** Props for {@link DataGridPagination}. */
 export interface DataGridPaginationProps {
-  /** The choices in the "Rows per page" picker. Defaults to 25, 50 and 100. */
+  /**
+   * The choices in the "Rows per page" picker. Defaults to 25, 50 and 100; sizes over 100
+   * are dropped, and the current size is always offered.
+   */
   pageSizes?: readonly number[];
 }
 

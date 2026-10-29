@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useDataGridContext } from './data-grid-context';
+import { useDataGrid } from './use-data-grid';
 
 /** Props for {@link DataGridNoMatches}. */
 export interface DataGridNoMatchesProps {
@@ -13,7 +13,6 @@ export interface DataGridNoMatchesProps {
  * children only while that state applies.
  */
 export function DataGridNoMatches({ children }: DataGridNoMatchesProps) {
-  const { table } = useDataGridContext('NoMatches');
-  const hasRows = table.getCoreRowModel().rows.length > 0;
-  return hasRows && table.getRowCount() === 0 ? children : null;
+  const { rowCount, filteredRowCount } = useDataGrid().pagination;
+  return rowCount > 0 && filteredRowCount === 0 ? children : null;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useDataGridContext } from './data-grid-context';
+import { useDataGrid } from './use-data-grid';
 
 /** Props for {@link DataGridEmpty}. */
 export interface DataGridEmptyProps {
@@ -13,6 +13,6 @@ export interface DataGridEmptyProps {
  * children only while that state applies.
  */
 export function DataGridEmpty({ children }: DataGridEmptyProps) {
-  const { table } = useDataGridContext('Empty');
-  return table.getCoreRowModel().rows.length === 0 ? children : null;
+  const { rowCount } = useDataGrid().pagination;
+  return rowCount === 0 ? children : null;
 }

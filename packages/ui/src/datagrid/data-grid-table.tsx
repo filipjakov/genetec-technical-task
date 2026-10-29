@@ -1,13 +1,20 @@
 'use client';
 
 import { VisuallyHidden } from '@chakra-ui/react';
+import type { Column } from '@tanstack/react-table';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { getColumnId, getColumnValue } from './columns';
 import { DataGridColumnHeader } from './data-grid-column-header';
-import { useDataGridContext } from './data-grid-context';
 import { DataGridDefaultStates } from './data-grid-default-states';
 import { DataGridFrame } from './data-grid-frame';
 import { formatCellValue } from './format-cell-value';
+import {
+  getSourceColumn,
+  type ErasedRow,
+  type Features,
+} from './table-features';
+import { useDataGridContext } from './use-data-grid-context';
+import { SORT_DIRECTION_NAMES } from './view-state';
 
 const DEFAULT_COLUMN_WIDTH = '10rem';
 
@@ -31,13 +38,12 @@ export interface DataGridTableProps {
  * page, sort or filter scrolls it back to the top.
  */
 export function DataGridTable({ label, children }: DataGridTableProps) {
-  const { table, columnsById } = useDataGridContext('Table');
+  const { table } = useDataGridContext('Table');
   // Set on a header click only, so the initial sort isn't announced on mount.
   const [announcement, setAnnouncement] = useState('');
 
-  const columns = table
-    .getVisibleLeafColumns()
-    .map((column) => columnsById.get(column.id)!);
+  const tableColumns = table.getVisibleLeafColumns();
+  const columns = tableColumns.map(getSourceColumn);
   const widths = columns.map((column) => column.width ?? DEFAULT_COLUMN_WIDTH);
   const [sort] = table.state.sorting;
   const { pageIndex, pageSize } = table.state.pagination;
@@ -49,15 +55,15 @@ export function DataGridTable({ label, children }: DataGridTableProps) {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [pageIndex, pageSize, sort?.id, sort?.desc, columnFilters]);
 
-  const sortBy = (columnId: string, columnLabel: string) => {
-    const current = sort?.id === columnId && (sort.desc ? 'desc' : 'asc');
+  const sortBy = (column: Column<Features, ErasedRow>, columnLabel: string) => {
+    const current = column.getIsSorted();
     // none → ascending → descending → none
     const next = !current ? 'asc' : current === 'asc' ? 'desc' : false;
-    table.setSorting(next ? [{ id: columnId, desc: next === 'desc' }] : []);
+    table.setSorting(next ? [{ id: column.id, desc: next === 'desc' }] : []);
     table.setPageIndex(0);
     setAnnouncement(
       next
-        ? `Sorted by ${columnLabel}, ${next === 'asc' ? 'ascending' : 'descending'}`
+        ? `Sorted by ${columnLabel}, ${SORT_DIRECTION_NAMES[next]}`
         : 'Not sorted',
     );
   };
@@ -76,15 +82,15 @@ export function DataGridTable({ label, children }: DataGridTableProps) {
         </colgroup>
         <thead>
           <tr>
-            {columns.map((column) => {
-              const id = getColumnId(column);
+            {tableColumns.map((column, index) => {
+              const { label } = columns[index]!;
               return (
                 <DataGridColumnHeader
-                  key={id}
-                  label={column.label}
-                  sortable={column.sortable ?? true}
-                  sorted={sort?.id === id && (sort.desc ? 'desc' : 'asc')}
-                  onSort={() => sortBy(id, column.label)}
+                  key={column.id}
+                  label={label}
+                  sortable={column.getCanSort()}
+                  sorted={column.getIsSorted()}
+                  onSort={() => sortBy(column, label)}
                 />
               );
             })}
@@ -98,13 +104,18 @@ export function DataGridTable({ label, children }: DataGridTableProps) {
                 {columns.map((column) => {
                   // The raw value: the table's accessor turns `null` into `undefined` for sorting.
                   const value = getColumnValue(column, row.original);
+                  const text = formatCellValue(value);
                   const content = column.cell
                     ? column.cell(value, row.original)
-                    : formatCellValue(value);
+                    : text;
                   return (
                     <td
                       key={getColumnId(column)}
-                      title={typeof content === 'string' ? content : undefined}
+                      // A custom `cell` may truncate too; its title falls back to the value's text.
+                      title={
+                        (typeof content === 'string' ? content : text) ||
+                        undefined
+                      }
                     >
                       {content}
                     </td>

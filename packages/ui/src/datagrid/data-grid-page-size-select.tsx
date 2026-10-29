@@ -2,6 +2,7 @@
 
 import { createListCollection, Portal, Select } from '@chakra-ui/react';
 import { useMemo } from 'react';
+import { clampPageSize } from './view-state';
 
 interface DataGridPageSizeSelectProps {
   pageSizes: readonly number[];
@@ -15,16 +16,19 @@ export function DataGridPageSizeSelect({
   pageSize,
   onPageSizeChange,
 }: DataGridPageSizeSelectProps) {
-  const collection = useMemo(
-    () =>
-      createListCollection({
-        items: pageSizes.map((size) => ({
-          label: String(size),
-          value: String(size),
-        })),
-      }),
-    [pageSizes],
-  );
+  // Sizes over the cap are dropped, and the current one is always offered so the value
+  // never shows blank, even when a controlled `pageSize` isn't in `pageSizes`.
+  const collection = useMemo(() => {
+    const sizes = new Set([
+      ...pageSizes.filter((size) => size === clampPageSize(size)),
+      pageSize,
+    ]);
+    return createListCollection({
+      items: [...sizes]
+        .sort((a, b) => a - b)
+        .map((size) => ({ label: String(size), value: String(size) })),
+    });
+  }, [pageSizes, pageSize]);
 
   return (
     <Select.Root

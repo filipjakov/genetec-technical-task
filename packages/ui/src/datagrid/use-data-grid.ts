@@ -1,6 +1,8 @@
 'use client';
 
-import { useDataGridContext } from './data-grid-context';
+import { getSourceColumn } from './table-features';
+import { useDataGridContext } from './use-data-grid-context';
+import { clampPageSize } from './view-state';
 
 /** The grid's paging state and controls, as {@link useDataGrid} returns them. */
 export interface DataGridPaginationState {
@@ -10,7 +12,10 @@ export interface DataGridPaginationState {
   pageCount: number;
   pageSize: number;
   setPageIndex: (pageIndex: number) => void;
-  /** Changes the page size, moving to the page that keeps the current top row in view. */
+  /**
+   * Changes the page size (at most 100), moving to the page that keeps the current top row
+   * in view.
+   */
   setPageSize: (pageSize: number) => void;
   /** Every row passed to `DataGrid.Root`. */
   rowCount: number;
@@ -39,7 +44,7 @@ export interface DataGridApi {
  * menu. Call it anywhere under `DataGrid.Root`.
  */
 export function useDataGrid(): DataGridApi {
-  const { table, columnsById } = useDataGridContext('useDataGrid');
+  const { table } = useDataGridContext('useDataGrid');
   const { pageIndex, pageSize } = table.state.pagination;
   const visibleCount = table.getVisibleLeafColumns().length;
 
@@ -48,7 +53,7 @@ export function useDataGrid(): DataGridApi {
       const visible = column.getIsVisible();
       return {
         id: column.id,
-        label: columnsById.get(column.id)!.label,
+        label: getSourceColumn(column).label,
         visible,
         toggle: () => {
           if (visible && visibleCount === 1) return;
@@ -61,7 +66,7 @@ export function useDataGrid(): DataGridApi {
       pageCount: table.getPageCount(),
       pageSize,
       setPageIndex: table.setPageIndex,
-      setPageSize: table.setPageSize,
+      setPageSize: (size) => table.setPageSize(clampPageSize(size)),
       rowCount: table.getCoreRowModel().rows.length,
       filteredRowCount: table.getRowCount(),
     },

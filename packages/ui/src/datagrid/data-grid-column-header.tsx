@@ -1,16 +1,17 @@
 'use client';
 
 import { Button, Text } from '@chakra-ui/react';
-import type { SortDirection } from './data-grid-root';
-
-const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const;
+import { SORT_DIRECTION_NAMES, type SortDirection } from './view-state';
 
 const SORT_INDICATOR = { asc: '↑', desc: '↓' } as const;
 
 interface DataGridColumnHeaderProps {
   label: string;
   sortable: boolean;
-  /** The column's current direction, or `false` when it isn't the sorted column. */
+  /**
+   * The column's current direction, or `false` when it isn't the sorted column. Ignored
+   * unless `sortable`, so an unsortable column never claims a sort.
+   */
   sorted: SortDirection | false;
   onSort: () => void;
 }
@@ -26,7 +27,7 @@ export function DataGridColumnHeader({
     <th
       scope="col"
       title={label}
-      aria-sort={sorted ? ARIA_SORT[sorted] : undefined}
+      aria-sort={sortable && sorted ? SORT_DIRECTION_NAMES[sorted] : undefined}
     >
       {sortable ? (
         <Button
