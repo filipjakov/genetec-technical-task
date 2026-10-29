@@ -11,6 +11,7 @@ import { useCallback, useId, useRef, type ReactNode } from 'react';
 import { useTimelineContext } from './timeline-context';
 import { DAY_HEADER_HEIGHT, TimelineDayHeader } from './timeline-day-header';
 import type { TimelineDay } from './timeline-model';
+import { useTimelineFocus } from './use-timeline-focus';
 
 /** Props for {@link TimelineGrid}. */
 export interface TimelineGridProps<TItem = unknown> {
@@ -65,6 +66,8 @@ const styles = {
     borderBottomWidth: '1px',
     borderColor: 'border.muted',
     overflow: 'hidden',
+    cursor: 'pointer',
+    focusVisibleRing: 'inside',
   },
   '& [data-part=content]': {
     flex: 1,
@@ -77,6 +80,11 @@ const styles = {
  * row (the day and its item count), then a row per item. The current day's header sticks
  * to the top while you scroll. Only the rows in view are rendered.
  *
+ * One item takes Tab at a time (the last focused, else the newest). Up / Down move by item,
+ * Left / Right to the older / newer day, Home / End to the day's first / last item,
+ * Ctrl+Home / Ctrl+End to the first / last item, PageUp / PageDown by a screenful, and
+ * Enter, Space or a click activate the item. See `Timeline.KeyHint`.
+ *
  * It fills its parent's height and scrolls inside it, so give the parent a height. Renders
  * nothing when there are no items; see `Timeline.Empty`.
  */
@@ -85,7 +93,8 @@ export function TimelineGrid({
   rowHeight = DEFAULT_ROW_HEIGHT,
   children,
 }: TimelineGridProps) {
-  const { model, getLabel } = useTimelineContext('Grid');
+  const { model, getLabel, cursor, tabStop, keyHintId } =
+    useTimelineContext('Grid');
   const { entries } = model;
   const scrollRef = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -103,15 +112,24 @@ export function TimelineGrid({
     },
     [entries],
   );
-  // Keeps the first rendered day's header mounted, so its rowgroup's label resolves.
+  // Keeps the tab stop mounted wherever it is, so focus never lands on an unmounted row,
+  // and the first rendered day's header and the tab stop's, so their rowgroup labels resolve.
   const rangeExtractor = useCallback(
     (range: Range) => {
       const indexes = defaultRangeExtractor(range);
       const first = entries[indexes[0]!];
-      if (!first || first.day.headerIndex === indexes[0]) return indexes;
-      return [first.day.headerIndex, ...indexes];
+      const extra = [
+        first?.day.headerIndex,
+        tabStop?.index,
+        tabStop?.day.headerIndex,
+      ];
+      const all = new Set(indexes);
+      for (const index of extra) if (index !== undefined) all.add(index);
+      return all.size === indexes.length
+        ? indexes
+        : [...all].sort((a, b) => a - b);
     },
-    [entries],
+    [entries, tabStop],
   );
 
   // The virtualizer re-renders this component on scroll; it must not be memoized.
@@ -123,8 +141,12 @@ export function TimelineGrid({
     getItemKey,
     rangeExtractor,
     overscan: 8,
+    // Keeps a row scrolled to from the top out from under the sticky day header.
+    scrollPaddingStart: DAY_HEADER_HEIGHT,
     useFlushSync: false,
   });
+
+  const focusHandlers = useTimelineFocus(scrollRef, virtualizer, rowHeight);
 
   if (entries.length === 0) {
     return null;
@@ -159,11 +181,13 @@ export function TimelineGrid({
       role="grid"
       aria-label={label}
       aria-rowcount={entries.length}
+      aria-describedby={keyHintId}
       height="full"
       overflowY="auto"
       borderWidth="1px"
       rounded="md"
       css={styles}
+      {...focusHandlers}
     >
       {topDay && (
         <div data-part="sticky" aria-hidden="true">
@@ -203,8 +227,14 @@ export function TimelineGrid({
                   ) : (
                     <div
                       data-part="cell"
+                      data-index={virtualItem.index}
                       role="gridcell"
-                      aria-label={getLabel(entry.item)}
+                      tabIndex={entry === tabStop ? 0 : -1}
+                      aria-label={
+                        entry === tabStop && cursor.announceDay
+                          ? `${day.label}, ${day.countLabel}. ${getLabel(entry.item)}`
+                          : getLabel(entry.item)
+                      }
                     >
                       <div data-part="content" aria-hidden="true">
                         {children(entry.item)}

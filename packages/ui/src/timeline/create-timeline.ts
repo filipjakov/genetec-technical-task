@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react';
 import { TimelineEmpty } from './timeline-empty';
 import { TimelineGrid, type TimelineGridProps } from './timeline-grid';
+import { TimelineKeyHint } from './timeline-key-hint';
 import { TimelineRoot, type TimelineRootProps } from './timeline-root';
 
 /** The Timeline's item-typed parts, as {@link createTimeline} returns them. */
 export interface TypedTimeline<TItem> {
   Root: (props: TimelineRootProps<TItem>) => ReactNode;
   Grid: (props: TimelineGridProps<TItem>) => ReactNode;
+  KeyHint: typeof TimelineKeyHint;
   Empty: typeof TimelineEmpty;
 }
 
@@ -27,6 +29,7 @@ export function createTimeline<TItem>(): TypedTimeline<TItem> {
     Root: TimelineRoot,
     // Sound: the Grid only calls `children` with the items given to Root.
     Grid: TimelineGrid as TypedTimeline<TItem>['Grid'],
+    KeyHint: TimelineKeyHint,
     Empty: TimelineEmpty,
   };
 }

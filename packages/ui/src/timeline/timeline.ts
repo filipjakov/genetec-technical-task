@@ -1,5 +1,6 @@
 import { TimelineEmpty } from './timeline-empty';
 import { TimelineGrid } from './timeline-grid';
+import { TimelineKeyHint } from './timeline-key-hint';
 import { TimelineRoot } from './timeline-root';
 import { TimelineSkeleton } from './timeline-skeleton';
 
@@ -17,6 +18,7 @@ import { TimelineSkeleton } from './timeline-skeleton';
  *     getLabel={getEventLabel}
  *     onItemActivate={openEvent}
  *   >
+ *     <Timeline.KeyHint activateLabel="edit" />
  *     <Timeline.Grid label="Events">{(event) => <EventRow event={event as Event} />}</Timeline.Grid>
  *     <Timeline.Empty />
  *   </Timeline.Root>
@@ -25,6 +27,7 @@ import { TimelineSkeleton } from './timeline-skeleton';
 export const Timeline = {
   Root: TimelineRoot,
   Grid: TimelineGrid,
+  KeyHint: TimelineKeyHint,
   Empty: TimelineEmpty,
   Skeleton: TimelineSkeleton,
 };

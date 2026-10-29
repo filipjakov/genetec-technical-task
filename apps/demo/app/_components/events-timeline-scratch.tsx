@@ -1,7 +1,7 @@
 'use client';
 
 // Throwaway scratch Timeline for the Timeline slices; replaced by the demo shell.
-import { Box, Button, Stack, Text } from '@chakra-ui/react';
+import { Button, Stack, Text } from '@chakra-ui/react';
 import { Timeline } from '@repo/ui/timeline';
 import { Suspense, useState } from 'react';
 import { ClientOnly } from './client-only';
@@ -19,7 +19,7 @@ export function EventsTimelineScratch() {
       >
         {showEmpty ? 'Show Events' : 'Show no items'}
       </Button>
-      <Box height="70vh">
+      <Stack height="70vh" gap="2">
         <QueryErrorBoundary
           fallback={() => <Text role="alert">Couldn&apos;t load events.</Text>}
         >
@@ -29,7 +29,7 @@ export function EventsTimelineScratch() {
             </Suspense>
           </ClientOnly>
         </QueryErrorBoundary>
-      </Box>
+      </Stack>
     </Stack>
   );
 }
