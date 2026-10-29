@@ -3,6 +3,7 @@
 // Scratch page until the demo shell slice: each component slice mounts its work here.
 import { Badge, Button, Heading, HStack, Stack, Text } from '@chakra-ui/react';
 import { CATEGORIES, SEVERITIES } from '@repo/ui/event-form';
+import { EventFormScratch } from './_components/event-form-scratch';
 import { EventsGridScratch } from './_components/events-grid-scratch';
 import { EventsReadout } from './_components/events-readout';
 import { EventsTimelineScratch } from './_components/events-timeline-scratch';
@@ -13,6 +14,7 @@ export default function Page() {
     <Stack as="main" gap="4" p="6">
       <Heading as="h1">Event Explorer</Heading>
       <EventsReadout />
+      <EventFormScratch />
       <EventsGridScratch />
       <EventsTimelineScratch />
       <Text color="fg.muted">
