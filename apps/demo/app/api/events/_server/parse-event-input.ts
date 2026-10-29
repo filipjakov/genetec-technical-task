@@ -31,7 +31,7 @@ function eventInputSchema(now: Date) {
 }
 
 /** The parsed Event, or the names of the fields that failed. */
-export type ParseEventResult =
+type ParseEventResult =
   { ok: true; event: Event } | { ok: false; fields: (keyof Event)[] };
 
 /**
@@ -41,14 +41,15 @@ export type ParseEventResult =
  * trims to empty is omitted.
  */
 export function parseEventInput(json: unknown, now: Date): ParseEventResult {
-  const result = eventInputSchema(now).safeParse(json);
+  // A non-object body is read as `{}`, so every required field is reported missing.
+  const body =
+    typeof json === 'object' && json !== null && !Array.isArray(json)
+      ? json
+      : {};
+  const result = eventInputSchema(now).safeParse(body);
   if (!result.success) {
     const fields = result.error.issues.map((issue) => issue.path[0]);
-    // A non-object body fails at the root (no path): every required field is missing.
-    const failed = fields.includes(undefined)
-      ? (['id', 'title', 'occurredAt', 'category', 'severity'] as const)
-      : fields;
-    return { ok: false, fields: [...new Set(failed)] as (keyof Event)[] };
+    return { ok: false, fields: [...new Set(fields)] as (keyof Event)[] };
   }
 
   const { location, description, ...required } = result.data;

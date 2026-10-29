@@ -34,7 +34,7 @@ export function EventsGridSection() {
     ) ?? null;
 
   /** Adds an Event, or edits `event`, then moves focus and says where it went. */
-  const editEvent = async (event?: Event) => {
+  const addOrEditEvent = async (event?: Event) => {
     const saved = await openEventDialog(event);
     const id = event?.id ?? saved?.id;
     const editButton = id === undefined ? null : findEditButton(id);
@@ -69,7 +69,9 @@ export function EventsGridSection() {
         : queryClient
             .getQueryData(eventsQueryOptions.queryKey)
             ?.find((stored) => stored.id === id);
-    if (event) void editEvent(event);
+    if (event) {
+      void addOrEditEvent(event);
+    }
   };
 
   return (
@@ -91,7 +93,10 @@ export function EventsGridSection() {
         >
           Events
         </Heading>
-        <NewEventButton ref={newEventRef} onClick={() => void editEvent()} />
+        <NewEventButton
+          ref={newEventRef}
+          onClick={() => void addOrEditEvent()}
+        />
       </Flex>
       {/* Positioning pins the grid to the space left on the page; under 20rem the page scrolls. */}
       <Box flex="1" minHeight="20rem" position="relative">

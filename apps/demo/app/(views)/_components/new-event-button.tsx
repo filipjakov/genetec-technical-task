@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Ref } from 'react';
 import { eventsQueryOptions } from '../_utils/events-query';
 
-export interface NewEventButtonProps {
+interface NewEventButtonProps {
   onClick: () => void;
   /** Focus returns here after an Add, saved or cancelled. */
   ref?: Ref<HTMLButtonElement>;

@@ -2,12 +2,12 @@
 
 import { Button, HStack, Text } from '@chakra-ui/react';
 import { DataGrid } from '@repo/ui/datagrid';
-import type { Event } from '@repo/ui/event-form';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { useClearEventsFilters } from '../_hooks/use-clear-events-filters';
 import { useEventsView } from '../_hooks/use-events-view';
 import { eventsQueryOptions } from '../../_utils/events-query';
+import { getEventId } from '../../_utils/get-event-id';
 import {
   isEventColumnId,
   loadEventsFilters,
@@ -15,8 +15,6 @@ import {
 } from '../_utils/events-view-params';
 import { toGridFilters } from '../_utils/to-grid-filters';
 import { eventColumns } from '../_utils/event-columns';
-
-const getEventId = (event: Event) => event.id;
 
 // The grid's pager offers only PAGE_SIZES, so the fallback is never hit.
 const toPageSize = (size: number) =>

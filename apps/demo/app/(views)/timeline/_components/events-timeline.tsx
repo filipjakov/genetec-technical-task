@@ -6,9 +6,11 @@ import { createTimeline, type TimelineHandle } from '@repo/ui/timeline';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import type { Ref } from 'react';
 import {
-  eventsQueryOptions,
+  TIMELINE_WINDOW_DAYS,
   selectTimelineWindow,
-} from '../../_utils/events-query';
+} from '../../../_utils/timeline-window';
+import { eventsQueryOptions } from '../../_utils/events-query';
+import { getEventId } from '../../_utils/get-event-id';
 
 const EventTimeline = createTimeline<Event>();
 
@@ -20,7 +22,6 @@ const timeFormat = new Intl.DateTimeFormat(undefined, {
   hourCycle: 'h23',
 });
 
-const getEventId = (event: Event) => event.id;
 const getOccurredAt = (event: Event) => event.occurredAt;
 const getEventLabel = (event: Event) =>
   [
@@ -36,7 +37,7 @@ const countFormat = new Intl.NumberFormat();
 const formatEventCount = (count: number) =>
   count === 1 ? '1 event' : `${countFormat.format(count)} events`;
 
-export interface EventsTimelineProps {
+interface EventsTimelineProps {
   /** Opens an Event for editing; pass a stable function. */
   onEdit: (event: Event) => void;
   /** Brings focus back to the Timeline, e.g. when the Edit dialog closes. */
@@ -70,7 +71,7 @@ export function EventsTimeline({ onEdit, ref }: EventsTimelineProps) {
       <Box flex="1" minHeight="20rem" position="relative">
         <Box position="absolute" inset="0">
           <EventTimeline.Grid
-            label="Events, last 30 days"
+            label={`Events, last ${TIMELINE_WINDOW_DAYS} days`}
             describedBy={KEY_HINT_ID}
           >
             {(event) => (
@@ -104,7 +105,9 @@ export function EventsTimeline({ onEdit, ref }: EventsTimelineProps) {
         </Box>
       </Box>
       <EventTimeline.Empty>
-        <Text color="fg.muted">No Events in the last 30 days.</Text>
+        <Text color="fg.muted">
+          No Events in the last {TIMELINE_WINDOW_DAYS} days.
+        </Text>
       </EventTimeline.Empty>
     </EventTimeline.Root>
   );

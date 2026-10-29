@@ -1,10 +1,10 @@
 import { faker } from '@faker-js/faker/locale/en';
 import { CATEGORIES, type Category, type Event } from '@repo/ui/event-form';
+import { TIMELINE_WINDOW_DAYS as WINDOW_DAYS } from '../../../_utils/timeline-window';
 
 const SEED = 20_261_027;
 const EVENT_COUNT = 100_000;
 const SPAN_DAYS = 300;
-const WINDOW_DAYS = 30;
 const WINDOW_EVENT_COUNT = 12_000;
 const OLDER_INCIDENT_DAYS = 3;
 

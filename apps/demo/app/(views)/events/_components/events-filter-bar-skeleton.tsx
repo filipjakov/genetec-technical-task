@@ -2,7 +2,6 @@
 
 import {
   Box,
-  Button,
   Field,
   Fieldset,
   Flex,
@@ -12,6 +11,7 @@ import {
   Text,
   VisuallyHidden,
 } from '@chakra-ui/react';
+import { ButtonSkeleton } from './button-skeleton';
 
 const FIELDS = [
   { label: 'Title', width: '12rem' },
@@ -20,17 +20,6 @@ const FIELDS = [
   { label: 'Location', width: '12rem' },
   { label: 'Description', width: '12rem' },
 ];
-
-/** A real `xs` outline button under the skeleton, so the placeholder has its exact size. */
-function ButtonSkeleton({ label }: { label: string }) {
-  return (
-    <Skeleton>
-      <Button size="xs" variant="outline" tabIndex={-1}>
-        {label}
-      </Button>
-    </Skeleton>
-  );
-}
 
 /**
  * A placeholder for `EventsFilterBar` while it waits for the client, laid out like it (same

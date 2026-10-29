@@ -9,7 +9,10 @@ import { openEventDialog } from '../../_components/event-dialog';
 import { NewEventButton } from '../../_components/new-event-button';
 import { QueryErrorBoundary } from '../../_components/query-error-boundary';
 import { toaster } from '../../../_components/toaster';
-import { isInTimelineWindow } from '../../_utils/events-query';
+import {
+  TIMELINE_WINDOW_DAYS,
+  isInTimelineWindow,
+} from '../../../_utils/timeline-window';
 import { EventsTimeline } from './events-timeline';
 
 const HEADING_ID = 'timeline-heading';
@@ -32,7 +35,7 @@ export function EventsTimelineSection() {
   const newEventRef = useRef<HTMLButtonElement>(null);
 
   /** Adds an Event, or edits `event`, then moves focus and says where it went. */
-  const editEvent = useCallback(async (event?: Event) => {
+  const addOrEditEvent = useCallback(async (event?: Event) => {
     const saved = await openEventDialog(event);
     // The Timeline remembers the edited Event; if it left the Window, focus lands on the
     // Event now at its old position.
@@ -50,15 +53,15 @@ export function EventsTimelineSection() {
       type: 'success',
       title: isInTimelineWindow(saved)
         ? `Event saved to ${dayFormat.format(saved.occurredAt)}.`
-        : "Event saved. It's older than the last 30 days, so it isn't in the Timeline.",
+        : `Event saved. It's older than the last ${TIMELINE_WINDOW_DAYS} days, so it isn't in the Timeline.`,
       closable: true,
       duration: 6000,
     });
   }, []);
   // Stable, so the Timeline isn't handed a new activation handler on each render.
   const onEdit = useCallback(
-    (event: Event) => void editEvent(event),
-    [editEvent],
+    (event: Event) => void addOrEditEvent(event),
+    [addOrEditEvent],
   );
 
   return (
@@ -72,13 +75,16 @@ export function EventsTimelineSection() {
     >
       <Flex align="center" justify="space-between" gap="4">
         <Heading as="h2" size="md" id={HEADING_ID}>
-          Last 30 days
+          Last {TIMELINE_WINDOW_DAYS} days
         </Heading>
-        <NewEventButton ref={newEventRef} onClick={() => void editEvent()} />
+        <NewEventButton
+          ref={newEventRef}
+          onClick={() => void addOrEditEvent()}
+        />
       </Flex>
       <Stack gap="2" flex="1" minHeight="0">
         <QueryErrorBoundary
-          fallback={() => <Text role="alert">Couldn&apos;t load events.</Text>}
+          fallback={() => <Text role="alert">Couldn&apos;t load Events.</Text>}
         >
           <ClientOnly fallback={<Timeline.Skeleton label="Loading Events" />}>
             <Suspense fallback={<Timeline.Skeleton label="Loading Events" />}>

@@ -14,7 +14,7 @@ interface SelectFilterInputProps<TOption extends string> {
   label: string;
 }
 
-/** A multi-select that shows every row while nothing is picked. */
+/** A multi-select that matches every Event while nothing is picked. */
 export function SelectFilterInput<TOption extends string>({
   options,
   labels,

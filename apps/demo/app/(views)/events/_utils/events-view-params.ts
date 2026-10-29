@@ -97,5 +97,3 @@ export const eventsViewParams = {
 };
 
 export type EventsFilterValues = inferParserType<typeof eventsFilterParams>;
-
-export type EventsView = inferParserType<typeof eventsViewParams>;

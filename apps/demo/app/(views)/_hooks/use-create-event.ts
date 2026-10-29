@@ -2,7 +2,7 @@
 
 import type { Event, EventFormValues } from '@repo/ui/event-form';
 import { useCallback } from 'react';
-import { postEvent } from '../_utils/load-events';
+import { postEvent } from '../_utils/events-api';
 import { useSaveEvent } from './use-save-event';
 
 /**

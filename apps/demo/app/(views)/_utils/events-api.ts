@@ -3,8 +3,8 @@ import type { Event } from '@repo/ui/event-form';
 /** An Event as JSON carries it: `occurredAt` is an ISO string. */
 type WireEvent = Omit<Event, 'occurredAt'> & { occurredAt: string };
 
-/** Turns a parsed wire Event into an Event in place; skips a copy per row at 100k rows. */
-export function reviveEvent(wire: WireEvent): Event {
+/** Turns a parsed wire Event into an Event in place; skips a copy per Event at 100k Events. */
+function reviveEvent(wire: WireEvent): Event {
   const event = wire as unknown as Event;
   event.occurredAt = new Date(wire.occurredAt);
   return event;
@@ -33,22 +33,30 @@ export async function loadEvents(): Promise<Event[]> {
   return wire.map(reviveEvent);
 }
 
-/** Stores a new Event and returns the server's copy. */
-export async function postEvent(event: Event): Promise<Event> {
-  const response = await fetch('/api/events', {
-    method: 'POST',
+/** Sends `event` as the JSON body and returns the server's copy. */
+async function sendEvent(
+  method: 'POST' | 'PATCH',
+  url: string,
+  event: Event,
+): Promise<Event> {
+  const response = await fetch(url, {
+    method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(event),
   });
   return reviveEvent(await readJson<WireEvent>(response));
 }
 
+/** Stores a new Event and returns the server's copy. */
+export function postEvent(event: Event): Promise<Event> {
+  return sendEvent('POST', '/api/events', event);
+}
+
 /** Replaces an existing Event and returns the server's copy. */
-export async function patchEvent(event: Event): Promise<Event> {
-  const response = await fetch(`/api/events/${encodeURIComponent(event.id)}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(event),
-  });
-  return reviveEvent(await readJson<WireEvent>(response));
+export function patchEvent(event: Event): Promise<Event> {
+  return sendEvent(
+    'PATCH',
+    `/api/events/${encodeURIComponent(event.id)}`,
+    event,
+  );
 }

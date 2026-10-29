@@ -4,7 +4,7 @@ import { endOfDay, startOfDay } from './day-keys';
 import type { EventsFilterValues } from './events-view-params';
 
 /** The Events grid's filters by column id, as `DataGrid.Root` takes them. */
-export type EventGridFilters = {
+type EventGridFilters = {
   occurredAt: DateRange;
   title: string;
   category: Category[];
