@@ -8,13 +8,15 @@ export interface TimelineDay {
   label: string;
   /** The day's item count, as `formatCount` words it. */
   countLabel: string;
+  /** The header's accessible name, e.g. `Tuesday 3 March, 14 items`. */
+  accessibleName: string;
   /** The day's position in {@link TimelineModel.days}, newest first. */
   position: number;
   /** The index of the day's header in {@link TimelineModel.entries}. */
   headerIndex: number;
   /** The positions of the day's first (newest) and last item in {@link TimelineModel.items}. */
-  firstItem: number;
-  lastItem: number;
+  firstPosition: number;
+  lastPosition: number;
 }
 
 /** An item's row in the Timeline. */
@@ -42,15 +44,20 @@ export interface TimelineModel {
   itemsById: Map<string, TimelineItemEntry>;
 }
 
+/** What {@link buildTimelineModel} reads from Root's props. */
+export interface TimelineModelAccessors {
+  getId: (item: unknown) => string;
+  getTimestamp: (item: unknown) => Date;
+  formatCount: (count: number) => string;
+}
+
 /**
  * Sorts `items` newest-first (ties by id, so the order is stable) and groups them by
  * viewer-local day. Day labels are fixed at `now`.
  */
 export function buildTimelineModel(
   items: readonly unknown[],
-  getId: (item: unknown) => string,
-  getTimestamp: (item: unknown) => Date,
-  formatCount: (count: number) => string,
+  { getId, getTimestamp, formatCount }: TimelineModelAccessors,
   now: Date = new Date(),
 ): TimelineModel {
   const sorted = items
@@ -67,26 +74,29 @@ export function buildTimelineModel(
     ...Map.groupBy(sorted, (row) => toDayKey(row.date)).entries(),
   ];
 
-  let firstItem = 0;
+  let firstPosition = 0;
   const days = groups.map(([key, rows], position): TimelineDay => {
+    const label = formatDayLabel(rows[0]!.date, now);
+    const countLabel = formatCount(rows.length);
     const day = {
       key,
-      label: formatDayLabel(rows[0]!.date, now),
-      countLabel: formatCount(rows.length),
+      label,
+      countLabel,
+      accessibleName: `${label}, ${countLabel}`,
       position,
       // Each earlier day put one header in front of its items.
-      headerIndex: firstItem + position,
-      firstItem,
-      lastItem: firstItem + rows.length - 1,
+      headerIndex: firstPosition + position,
+      firstPosition,
+      lastPosition: firstPosition + rows.length - 1,
     };
-    firstItem += rows.length;
+    firstPosition += rows.length;
     return day;
   });
 
   const itemEntries = groups.flatMap(([, rows], dayPosition) =>
     rows.map(({ item, id }, i): TimelineItemEntry => {
       const day = days[dayPosition]!;
-      const position = day.firstItem + i;
+      const position = day.firstPosition + i;
       return {
         kind: 'item',
         day,
@@ -103,7 +113,7 @@ export function buildTimelineModel(
     items: itemEntries,
     entries: days.flatMap((day): TimelineEntry[] => [
       { kind: 'header', day },
-      ...itemEntries.slice(day.firstItem, day.lastItem + 1),
+      ...itemEntries.slice(day.firstPosition, day.lastPosition + 1),
     ]),
     itemsById: new Map(itemEntries.map((entry) => [entry.id, entry])),
   };

@@ -2,10 +2,12 @@
 
 import { Kbd, Text } from '@chakra-ui/react';
 import type { ReactNode } from 'react';
-import { useTimelineContext } from './timeline-context';
+import { useTimelineContext } from './use-timeline-context';
 
 /** Props for {@link TimelineKeyHint}. */
 export interface TimelineKeyHintProps {
+  /** The hint's element id; pass it to `Timeline.Grid`'s `describedBy` to describe the grid. */
+  id?: string;
   /** What one item is called, after `↑↓`. Defaults to `item`. */
   itemNoun?: string;
   /** What Enter does, e.g. `edit`. Defaults to `open`. */
@@ -16,23 +18,24 @@ export interface TimelineKeyHintProps {
 
 /**
  * A visible line of the Timeline's keys, `↑↓ item · ← older day · newer day → · Enter open`,
- * which `Timeline.Grid` also uses as its accessible description. Place it anywhere under
+ * which can also be `Timeline.Grid`'s accessible description (see `describedBy`). Place it anywhere under
  * `Timeline.Root`; it renders nothing while there are no items.
  */
 export function TimelineKeyHint({
+  id,
   itemNoun = 'item',
   activateLabel = 'open',
   children,
 }: TimelineKeyHintProps) {
-  const { model, keyHintId } = useTimelineContext('KeyHint');
+  const { isEmpty } = useTimelineContext('KeyHint');
 
-  if (model.entries.length === 0) {
+  if (isEmpty) {
     return null;
   }
 
   // `Kbd` adds no text, so the Grid's accessible description still reads as one plain line.
   return (
-    <Text id={keyHintId} fontSize="sm" color="fg.muted">
+    <Text id={id} fontSize="sm" color="fg.muted">
       {children ?? (
         <>
           <Kbd size="sm">↑↓</Kbd> {itemNoun} · <Kbd size="sm">←</Kbd> older day

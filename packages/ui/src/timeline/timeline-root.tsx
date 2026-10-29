@@ -1,12 +1,22 @@
 'use client';
 
-import { useId, useMemo, useState, type ReactNode, type Ref } from 'react';
 import {
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+} from 'react';
+import {
+  cursorFor,
   TimelineContext,
   type TimelineCursor,
   type TimelineHandle,
 } from './timeline-context';
 import { buildTimelineModel } from './timeline-model';
+import { useToday } from './use-today';
 
 /** Props for {@link TimelineRoot}. */
 export interface TimelineRootProps<TItem> {
@@ -26,14 +36,19 @@ export interface TimelineRootProps<TItem> {
   onItemActivate: (item: TItem) => void;
   /** Words a day's item count, in its header. Defaults to `1 item` / `N items`. */
   formatCount?: (count: number) => string;
-  /** Exposes `focus()`, e.g. to return focus to the Timeline when a dialog closes. */
+  /**
+   * Exposes `focus()`, e.g. to return focus to the Timeline when a dialog closes. Parts
+   * rendered under Root can call `useTimeline().focus()` instead.
+   */
   ref?: Ref<TimelineHandle>;
   /** The Timeline's parts, such as `Timeline.Grid`, laid out as you like. */
   children: ReactNode;
 }
 
+const countFormat = new Intl.NumberFormat();
+
 const defaultFormatCount = (count: number) =>
-  count === 1 ? '1 item' : `${count} items`;
+  count === 1 ? '1 item' : `${countFormat.format(count)} items`;
 
 /**
  * Holds a Timeline's items, sorted newest-first and grouped by viewer-local day, and shares
@@ -52,8 +67,8 @@ const defaultFormatCount = (count: number) =>
  *   getLabel={(event) => event.title}
  *   onItemActivate={openEvent}
  * >
- *   <Timeline.KeyHint activateLabel="edit" />
- *   <Timeline.Grid label="Events">{(event) => event.title}</Timeline.Grid>
+ *   <Timeline.KeyHint id="timeline-keys" activateLabel="edit" />
+ *   <Timeline.Grid label="Events" describedBy="timeline-keys">{(event) => event.title}</Timeline.Grid>
  *   <Timeline.Empty />
  * </Timeline.Root>
  */
@@ -67,15 +82,19 @@ export function TimelineRoot<TItem>({
   ref,
   children,
 }: TimelineRootProps<TItem>) {
+  const today = useToday();
   const model = useMemo(
     () =>
       buildTimelineModel(
         items,
-        getId as (item: unknown) => string,
-        getTimestamp as (item: unknown) => Date,
-        formatCount,
+        {
+          getId: getId as (item: unknown) => string,
+          getTimestamp: getTimestamp as (item: unknown) => Date,
+          formatCount,
+        },
+        today,
       ),
-    [items, getId, getTimestamp, formatCount],
+    [items, getId, getTimestamp, formatCount, today],
   );
 
   const [cursor, setCursor] = useState<TimelineCursor>({
@@ -87,21 +106,45 @@ export function TimelineRoot<TItem>({
   const tabStop =
     model.itemsById.get(cursor.id) ??
     model.items[Math.min(cursor.position, model.items.length - 1)];
+  // Remembers the tab stop as it now is, so a re-targeted item stays the tab stop if the
+  // old one comes back, and a later removal re-targets from its current position.
+  if (
+    tabStop &&
+    (tabStop.id !== cursor.id || tabStop.position !== cursor.position)
+  ) {
+    setCursor(
+      cursorFor(tabStop, cursor.announceDay || tabStop.id !== cursor.id),
+    );
+  }
 
-  const keyHintId = useId();
+  const [focusRequest, setFocusRequest] = useState(0);
+  const requestFocus = useCallback(() => setFocusRequest((n) => n + 1), []);
+  useImperativeHandle(ref, () => ({ focus: requestFocus }), [requestFocus]);
+
+  const emptyRef = useRef<HTMLDivElement>(null);
 
   const context = useMemo(
     () => ({
       model,
+      isEmpty: model.items.length === 0,
       getLabel: getLabel as (item: unknown) => string,
       onItemActivate: onItemActivate as (item: unknown) => void,
       cursor,
       setCursor,
       tabStop,
-      ref,
-      keyHintId,
+      focusRequest,
+      requestFocus,
+      emptyRef,
     }),
-    [model, getLabel, onItemActivate, cursor, tabStop, ref, keyHintId],
+    [
+      model,
+      getLabel,
+      onItemActivate,
+      cursor,
+      tabStop,
+      focusRequest,
+      requestFocus,
+    ],
   );
 
   return <TimelineContext value={context}>{children}</TimelineContext>;

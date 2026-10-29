@@ -2,30 +2,39 @@
 
 import type { Virtualizer } from '@tanstack/react-virtual';
 import {
-  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
   type FocusEvent,
   type KeyboardEvent,
   type MouseEvent,
   type RefObject,
 } from 'react';
 import { flushSync } from 'react-dom';
-import { useTimelineContext } from './timeline-context';
+import { cursorFor } from './timeline-context';
 import { keyName, targetPosition } from './timeline-keys';
+import { ROW_HEIGHT } from './timeline-styles';
+import { useTimelineContext } from './use-timeline-context';
 
 /**
  * The Grid's roving focus and activation, as handlers for its `role="grid"` element: keys
  * move the cursor (see `timeline-keys.ts`), focus by click or Tab follows it, Enter, Space
- * or a click activate an item, and Root's `ref` gets `focus()`. See ADR 0005.
+ * or a click activate an item, and `focus()` requests are carried out. See ADR 0005.
  *
  * Relies on the Grid keeping the tab stop's row rendered, so it can always take focus.
  */
 export function useTimelineFocus(
   scrollRef: RefObject<HTMLDivElement | null>,
   virtualizer: Virtualizer<HTMLDivElement, Element>,
-  rowHeight: number,
 ) {
-  const { model, onItemActivate, cursor, setCursor, tabStop, ref } =
-    useTimelineContext('Grid');
+  const {
+    model,
+    onItemActivate,
+    cursor,
+    setCursor,
+    tabStop,
+    focusRequest,
+    emptyRef,
+  } = useTimelineContext('Grid');
   const { entries } = model;
 
   // Rows have fixed heights, so the tab stop can take focus before the scroll has
@@ -37,37 +46,30 @@ export function useTimelineFocus(
       ?.focus({ preventScroll: true });
   };
 
-  useImperativeHandle(ref, () => ({
-    focus: () => {
-      if (tabStop) {
-        focusTabStop(tabStop.index);
-      }
-    },
-  }));
+  // Carries out a `focus()` once its render has committed, so it targets the tab stop for
+  // the latest `items`, whose row is then mounted.
+  const handledRequest = useRef(focusRequest);
+  useLayoutEffect(() => {
+    if (focusRequest === handledRequest.current) return;
+    handledRequest.current = focusRequest;
+    if (tabStop) focusTabStop(tabStop.index);
+    else emptyRef.current?.focus();
+  });
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const key = keyName(event);
     if (!tabStop || key === undefined) return;
+    event.preventDefault();
     if (key === 'Enter' || key === ' ') {
-      event.preventDefault();
       onItemActivate(tabStop.item);
       return;
     }
     const viewport = scrollRef.current?.clientHeight ?? 0;
-    const pageRows = Math.max(1, Math.floor(viewport / rowHeight));
-    const position = targetPosition(model, tabStop, key, pageRows);
-    if (position === undefined) return;
-    event.preventDefault();
-    const target = model.items[position]!;
+    const pageRows = Math.max(1, Math.floor(viewport / ROW_HEIGHT));
+    const target = model.items[targetPosition(model, tabStop, key, pageRows)]!;
     if (target === tabStop) return;
     // Commits the new tab stop now, so its row is rendered before it takes focus.
-    flushSync(() =>
-      setCursor({
-        id: target.id,
-        position: target.position,
-        announceDay: target.day !== tabStop.day,
-      }),
-    );
+    flushSync(() => setCursor(cursorFor(target, target.day !== tabStop.day)));
     focusTabStop(target.index);
   };
 
@@ -84,11 +86,7 @@ export function useTimelineFocus(
     const entry = entries[Number(event.target.dataset.index)];
     if (entry?.kind !== 'item' || entry.id === cursor.id) return;
     const fromOutside = !event.currentTarget.contains(event.relatedTarget);
-    setCursor({
-      id: entry.id,
-      position: entry.position,
-      announceDay: fromOutside || entry.day !== tabStop?.day,
-    });
+    setCursor(cursorFor(entry, fromOutside || entry.day !== tabStop?.day));
   };
 
   // Focus coming back from outside always hears its day first.

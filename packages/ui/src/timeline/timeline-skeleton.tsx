@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Skeleton, VisuallyHidden } from '@chakra-ui/react';
-import { DAY_HEADER_HEIGHT } from './timeline-day-header';
+import { dayHeaderStyles, itemRowStyles } from './timeline-styles';
 
 /** Props for {@link TimelineSkeleton}. */
 export interface TimelineSkeletonProps {
@@ -9,8 +9,6 @@ export interface TimelineSkeletonProps {
   label: string;
   /** How many placeholder rows to draw. Defaults to 8. */
   rowCount?: number;
-  /** Each row's height in px; match the Grid's `rowHeight`. Defaults to 56. */
-  rowHeight?: number;
 }
 
 /**
@@ -26,33 +24,22 @@ export interface TimelineSkeletonProps {
 export function TimelineSkeleton({
   label,
   rowCount = 8,
-  rowHeight = 56,
 }: TimelineSkeletonProps) {
   return (
     <Box role="status" aria-busy="true">
       <VisuallyHidden>{label}</VisuallyHidden>
       <Box aria-hidden="true" borderWidth="1px" rounded="md" overflow="hidden">
-        <Box
-          display="flex"
-          alignItems="center"
-          height={`${DAY_HEADER_HEIGHT}px`}
-          paddingInline="3"
-          bg="bg.muted"
-          borderBottomWidth="1px"
-        >
+        <Box css={dayHeaderStyles}>
           <Skeleton width="8rem" height="3" />
         </Box>
         {Array.from({ length: rowCount }, (_, index) => (
           <Box
             key={index}
+            css={itemRowStyles}
             display="flex"
             flexDirection="column"
             justifyContent="center"
             gap="2"
-            height={`${rowHeight}px`}
-            paddingInline="3"
-            borderBottomWidth="1px"
-            borderColor="border.muted"
           >
             <Skeleton width="60%" height="3" />
             <Skeleton width="35%" height="3" />

@@ -18,8 +18,8 @@ import { TimelineSkeleton } from './timeline-skeleton';
  *     getLabel={getEventLabel}
  *     onItemActivate={openEvent}
  *   >
- *     <Timeline.KeyHint activateLabel="edit" />
- *     <Timeline.Grid label="Events">{(event) => <EventRow event={event as Event} />}</Timeline.Grid>
+ *     <Timeline.KeyHint id="timeline-keys" activateLabel="edit" />
+ *     <Timeline.Grid label="Events" describedBy="timeline-keys">{(event) => <EventRow event={event as Event} />}</Timeline.Grid>
  *     <Timeline.Empty />
  *   </Timeline.Root>
  * </Suspense>

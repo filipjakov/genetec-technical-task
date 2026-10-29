@@ -6,3 +6,4 @@ export type { TimelineKeyHintProps } from './timeline-key-hint';
 export type { TimelineHandle } from './timeline-context';
 export type { TimelineRootProps } from './timeline-root';
 export type { TimelineSkeletonProps } from './timeline-skeleton';
+export { useTimeline } from './use-timeline';

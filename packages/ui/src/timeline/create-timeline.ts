@@ -3,6 +3,8 @@ import { TimelineEmpty } from './timeline-empty';
 import { TimelineGrid, type TimelineGridProps } from './timeline-grid';
 import { TimelineKeyHint } from './timeline-key-hint';
 import { TimelineRoot, type TimelineRootProps } from './timeline-root';
+import { TimelineSkeleton } from './timeline-skeleton';
+import { useTimeline } from './use-timeline';
 
 /** The Timeline's item-typed parts, as {@link createTimeline} returns them. */
 export interface TypedTimeline<TItem> {
@@ -10,6 +12,8 @@ export interface TypedTimeline<TItem> {
   Grid: (props: TimelineGridProps<TItem>) => ReactNode;
   KeyHint: typeof TimelineKeyHint;
   Empty: typeof TimelineEmpty;
+  Skeleton: typeof TimelineSkeleton;
+  useTimeline: typeof useTimeline;
 }
 
 /**
@@ -31,5 +35,7 @@ export function createTimeline<TItem>(): TypedTimeline<TItem> {
     Grid: TimelineGrid as TypedTimeline<TItem>['Grid'],
     KeyHint: TimelineKeyHint,
     Empty: TimelineEmpty,
+    Skeleton: TimelineSkeleton,
+    useTimeline,
   };
 }

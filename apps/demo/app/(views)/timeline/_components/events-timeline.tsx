@@ -12,6 +12,8 @@ import {
 
 const EventTimeline = createTimeline<Event>();
 
+const KEY_HINT_ID = 'timeline-key-hint';
+
 const timeFormat = new Intl.DateTimeFormat(undefined, {
   hour: '2-digit',
   minute: '2-digit',
@@ -30,8 +32,9 @@ const getEventLabel = (event: Event) =>
   ]
     .filter(Boolean)
     .join(', ');
+const countFormat = new Intl.NumberFormat();
 const formatEventCount = (count: number) =>
-  count === 1 ? '1 event' : `${count} events`;
+  count === 1 ? '1 event' : `${countFormat.format(count)} events`;
 
 export interface EventsTimelineProps {
   /** Opens an Event for editing; pass a stable function. */
@@ -57,12 +60,19 @@ export function EventsTimeline({ onEdit, ref }: EventsTimelineProps) {
       onItemActivate={onEdit}
       formatCount={formatEventCount}
     >
-      <EventTimeline.KeyHint itemNoun="event" activateLabel="edit" />
+      <EventTimeline.KeyHint
+        id={KEY_HINT_ID}
+        itemNoun="event"
+        activateLabel="edit"
+      />
       {/* The Grid fills its parent; positioning pins it to the space left on the page, and
           under 20rem the page scrolls instead. */}
       <Box flex="1" minHeight="20rem" position="relative">
         <Box position="absolute" inset="0">
-          <EventTimeline.Grid label="Events, last 30 days">
+          <EventTimeline.Grid
+            label="Events, last 30 days"
+            describedBy={KEY_HINT_ID}
+          >
             {(event) => (
               <Stack gap="0" fontSize="sm">
                 <HStack gap="2">

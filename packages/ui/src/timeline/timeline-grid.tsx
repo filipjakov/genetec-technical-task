@@ -8,72 +8,27 @@ import {
   type VirtualItem,
 } from '@tanstack/react-virtual';
 import { useCallback, useId, useRef, type ReactNode } from 'react';
-import { useTimelineContext } from './timeline-context';
-import { DAY_HEADER_HEIGHT, TimelineDayHeader } from './timeline-day-header';
+import { TimelineDayHeader } from './timeline-day-header';
+import { DAY_HEADER_HEIGHT, gridStyles, ROW_HEIGHT } from './timeline-styles';
 import type { TimelineDay } from './timeline-model';
+import { useTimelineContext } from './use-timeline-context';
 import { useTimelineFocus } from './use-timeline-focus';
 
 /** Props for {@link TimelineGrid}. */
 export interface TimelineGridProps<TItem = unknown> {
   /** Names the grid for assistive tech, e.g. `Events, last 30 days`. */
   label: string;
-  /** Every item row's height in px; the content is clipped to it. Defaults to 56. */
-  rowHeight?: number;
   /**
-   * Renders an item's row content. It is hidden from assistive tech (the row is named by
-   * `getLabel`), so it must not be interactive.
+   * The ids of elements that describe the grid, as `aria-describedby`, typically a
+   * `Timeline.KeyHint`'s `id`.
+   */
+  describedBy?: string;
+  /**
+   * Renders an item's row content, clipped to a fixed 56px row. It is hidden from assistive
+   * tech (the row is named by `getLabel`), so it must not be interactive.
    */
   children: (item: TItem) => ReactNode;
 }
-
-const DEFAULT_ROW_HEIGHT = 56;
-
-// Plain elements styled from the container: rows re-render on every scroll frame.
-const styles = {
-  '& [data-part=row]': {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-  },
-  '& [data-part=day], & [data-part=sticky-day]': {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '3',
-    height: `${DAY_HEADER_HEIGHT}px`,
-    paddingInline: '3',
-    bg: 'bg.muted',
-    borderBottomWidth: '1px',
-    fontSize: 'sm',
-    fontWeight: 'semibold',
-  },
-  '& [data-part=day-count]': {
-    color: 'fg.muted',
-    fontWeight: 'normal',
-  },
-  '& [data-part=sticky]': {
-    position: 'sticky',
-    top: 0,
-    zIndex: 1,
-    height: 0,
-  },
-  '& [data-part=cell]': {
-    display: 'flex',
-    alignItems: 'center',
-    height: '100%',
-    paddingInline: '3',
-    borderBottomWidth: '1px',
-    borderColor: 'border.muted',
-    overflow: 'hidden',
-    cursor: 'pointer',
-    focusVisibleRing: 'inside',
-  },
-  '& [data-part=content]': {
-    flex: 1,
-    minWidth: 0,
-  },
-} as const;
 
 /**
  * The Timeline as a one-column `role="grid"`: a `rowgroup` per day, labelled by its header
@@ -90,10 +45,10 @@ const styles = {
  */
 export function TimelineGrid({
   label,
-  rowHeight = DEFAULT_ROW_HEIGHT,
+  describedBy,
   children,
 }: TimelineGridProps) {
-  const { model, getLabel, cursor, tabStop, keyHintId } =
+  const { model, isEmpty, getLabel, cursor, tabStop } =
     useTimelineContext('Grid');
   const { entries } = model;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -102,8 +57,8 @@ export function TimelineGrid({
 
   const estimateSize = useCallback(
     (index: number) =>
-      entries[index]!.kind === 'header' ? DAY_HEADER_HEIGHT : rowHeight,
-    [entries, rowHeight],
+      entries[index]!.kind === 'header' ? DAY_HEADER_HEIGHT : ROW_HEIGHT,
+    [entries],
   );
   const getItemKey = useCallback(
     (index: number) => {
@@ -146,9 +101,9 @@ export function TimelineGrid({
     useFlushSync: false,
   });
 
-  const focusHandlers = useTimelineFocus(scrollRef, virtualizer, rowHeight);
+  const focusHandlers = useTimelineFocus(scrollRef, virtualizer);
 
-  if (entries.length === 0) {
+  if (isEmpty) {
     return null;
   }
 
@@ -171,7 +126,7 @@ export function TimelineGrid({
       (item) =>
         item.index > top.index && entries[item.index]!.kind === 'header',
     );
-  const push = nextHeader
+  const stickyOffset = nextHeader
     ? Math.max(0, DAY_HEADER_HEIGHT - (nextHeader.start - scrollOffset))
     : 0;
 
@@ -181,19 +136,19 @@ export function TimelineGrid({
       role="grid"
       aria-label={label}
       aria-rowcount={entries.length}
-      aria-describedby={keyHintId}
+      aria-describedby={describedBy}
       height="full"
       overflowY="auto"
       borderWidth="1px"
       rounded="md"
-      css={styles}
+      css={gridStyles}
       {...focusHandlers}
     >
       {topDay && (
         <div data-part="sticky" aria-hidden="true">
           <div
             data-part="sticky-day"
-            style={{ transform: `translateY(${-push}px)` }}
+            style={{ transform: `translateY(${-stickyOffset}px)` }}
           >
             <TimelineDayHeader day={topDay} />
           </div>
@@ -220,7 +175,7 @@ export function TimelineGrid({
                       data-part="day"
                       role="rowheader"
                       id={headerId(day)}
-                      aria-label={`${day.label}, ${day.countLabel}`}
+                      aria-label={day.accessibleName}
                     >
                       <TimelineDayHeader day={day} />
                     </div>
@@ -232,7 +187,7 @@ export function TimelineGrid({
                       tabIndex={entry === tabStop ? 0 : -1}
                       aria-label={
                         entry === tabStop && cursor.announceDay
-                          ? `${day.label}, ${day.countLabel}. ${getLabel(entry.item)}`
+                          ? `${day.accessibleName}. ${getLabel(entry.item)}`
                           : getLabel(entry.item)
                       }
                     >
